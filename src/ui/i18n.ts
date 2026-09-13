@@ -19,6 +19,17 @@ const STRINGS = {
   silence: { es: 'Silencio', en: 'Silence' },
   spokenTime: { es: 'tiempo hablado', en: 'time spoken' },
   loadingModels: { es: 'Cargando modelos…', en: 'Loading models…' },
+  buildingTitle: { es: 'En construcción', en: 'Under construction' },
+  buildingBody: {
+    es: 'El motor que distingue las voces ya está probado, pero la interfaz todavía no. Mientras tanto puedes probar la versión antigua, que sí mide, aunque se equivoca más.',
+    en: 'The engine that tells voices apart is proven, but the interface is not built yet. In the meantime you can try the old version, which does measure, though it makes more mistakes.',
+  },
+  tryPrototype: { es: 'Probar la versión antigua', en: 'Try the old version' },
+  thisDevice: { es: 'Este dispositivo', en: 'This device' },
+  deviceReady: {
+    es: 'Tu navegador puede ejecutar Ronda.',
+    en: 'Your browser can run Ronda.',
+  },
   unsupported: {
     es: 'Este navegador no puede ejecutar Ronda. Hace falta WebAssembly y acceso al micrófono.',
     en: 'This browser cannot run Ronda. WebAssembly and microphone access are required.',

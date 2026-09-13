@@ -12,3 +12,4 @@ spike/node_modules/
 public/models/*.onnx
 spike/bench/test.wav
 public/ort/
+public/prototype/
