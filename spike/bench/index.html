@@ -1,0 +1,56 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ronda bench</title>
+<style>body{font:14px monospace;padding:20px;background:#111;color:#ddd}
+#log{white-space:pre-wrap;line-height:1.6}.ok{color:#7c7}.warn{color:#dc7}.err{color:#e77}</style>
+</head><body><h3>Ronda — Phase 0 browser benchmark</h3><div id="log"></div>
+<script type="module">
+const L = document.getElementById('log');
+const log = (m, c = '') => { console.log('[BENCH]', m); L.innerHTML += `<span class="${c}">${m}</span>\n`; };
+
+log(`crossOriginIsolated: ${self.crossOriginIsolated}  (needed for multi-threaded WASM)`, self.crossOriginIsolated ? 'ok' : 'warn');
+log(`WebGPU available: ${!!navigator.gpu}`, navigator.gpu ? 'ok' : 'warn');
+log(`hardwareConcurrency: ${navigator.hardwareConcurrency}`);
+
+const { AutoProcessor, AutoModel, AutoModelForAudioFrameClassification, env } =
+  await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/transformers.min.js');
+log('transformers.js loaded', 'ok');
+
+const ab = await (await fetch('./test.wav')).arrayBuffer();
+const ctx = new OfflineAudioContext(1, 1, 16000);
+const decoded = await ctx.decodeAudioData(ab);
+const audio = decoded.getChannelData(0);
+const durS = audio.length / 16000;
+log(`audio: ${durS.toFixed(1)}s @ ${decoded.sampleRate}Hz -> ${audio.length} samples`);
+
+const SEG = 'onnx-community/pyannote-segmentation-3.0';
+const EMB = 'onnx-community/wespeaker-voxceleb-resnet34-LM';
+
+for (const device of (navigator.gpu ? ['wasm', 'webgpu'] : ['wasm'])) {
+  for (const dtype of ['q8', 'fp32']) {
+    try {
+      log(`\n--- device=${device} dtype=${dtype} ---`);
+      let t = performance.now();
+      const sp = await AutoProcessor.from_pretrained(SEG);
+      const sm = await AutoModelForAudioFrameClassification.from_pretrained(SEG, { dtype, device });
+      const ep = await AutoProcessor.from_pretrained(EMB);
+      const em = await AutoModel.from_pretrained(EMB, { dtype, device });
+      log(`  load: ${(performance.now() - t).toFixed(0)} ms`);
+
+      const win = audio.slice(0, 160000); // one 10s window
+      await sm(await sp(win));            // warm-up
+      t = performance.now();
+      for (let i = 0; i < 3; i++) await sm(await sp(win));
+      const segMs = (performance.now() - t) / 3;
+      log(`  segmentation (10s window): ${segMs.toFixed(0)} ms  -> RTF ${(segMs / 10000).toFixed(4)}x`);
+
+      const seg2 = audio.slice(0, 32000); // one 2s speech segment
+      await em(await ep(seg2));
+      t = performance.now();
+      for (let i = 0; i < 5; i++) await em(await ep(seg2));
+      const embMs = (performance.now() - t) / 5;
+      log(`  embedding (2s segment):    ${embMs.toFixed(0)} ms`);
+      log(`  => live budget per 5s hop: ${(segMs + embMs).toFixed(0)} ms of 5000 ms = ${((segMs + embMs) / 50).toFixed(1)}% CPU`, (segMs + embMs) < 1500 ? 'ok' : 'warn');
+    } catch (e) { log(`  FAILED: ${e.message}`, 'err'); }
+  }
+}
+log('\nBENCH DONE', 'ok');
+</script></body></html>

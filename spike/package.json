@@ -1,0 +1,9 @@
+{
+  "name": "ronda-spike",
+  "private": true,
+  "type": "module",
+  "description": "THROWAWAY Phase 0 feasibility spike. Not part of the application.",
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0"
+  }
+}
