@@ -39,14 +39,32 @@ function base(): string {
     : `${import.meta.env.BASE_URL}/`;
 }
 
+/** Generous on a slow connection, but never an indefinite blank wait. */
+const LOAD_TIMEOUT_MS = 120_000;
+
+function withTimeout<T>(p: Promise<T>, what: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${what} took too long to load`)), LOAD_TIMEOUT_MS)),
+  ]);
+}
+
 let loading: Promise<LoadedModels> | null = null;
 
 /** Loads both models once; concurrent callers share the same download. */
 export function loadModels(onProgress?: (p: LoadProgress) => void): Promise<LoadedModels> {
   loading ??= (async () => {
     const ort = await getOrt();
-    // Leave one core for the UI and audio threads.
-    ort.env.wasm.numThreads = Math.max(1, Math.min(4, (navigator.hardwareConcurrency ?? 2) - 1));
+    // Single-threaded, deliberately.
+    //
+    // When cross-origin isolation comes from coi-serviceworker rather than real
+    // response headers — which is our situation on GitHub Pages — ORT's worker
+    // threads never start, and session creation hangs forever instead of
+    // failing. Measured on the deployed site: one thread creates a session in
+    // 0.3 s, four threads still had not returned after 15 s. crossOriginIsolated
+    // reports true either way, so it cannot be used to tell the two apart.
+    ort.env.wasm.numThreads = 1;
 
     const opts: OrtTypes.InferenceSession.SessionOptions = {
       executionProviders: ['wasm'],
@@ -54,14 +72,21 @@ export function loadModels(onProgress?: (p: LoadProgress) => void): Promise<Load
     };
 
     onProgress?.({ fraction: 0, label: 'segmentation' });
-    const segmentation = await ort.InferenceSession.create(`${base()}models/segmentation-int8.onnx`, opts);
+    const segmentation = await withTimeout(
+      ort.InferenceSession.create(`${base()}models/segmentation-int8.onnx`, opts),
+      'segmentation model');
 
     onProgress?.({ fraction: 0.2, label: 'embedding' });
-    const embedding = await ort.InferenceSession.create(`${base()}models/embedding-int8.onnx`, opts);
+    const embedding = await withTimeout(
+      ort.InferenceSession.create(`${base()}models/embedding-int8.onnx`, opts),
+      'embedding model');
 
     onProgress?.({ fraction: 1, label: 'ready' });
     return { segmentation, embedding };
-  })();
+  })().catch((err: unknown) => {
+    loading = null; // let the user retry rather than be stuck with a dead promise
+    throw err;
+  });
   return loading;
 }
 

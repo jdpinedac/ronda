@@ -6,7 +6,7 @@ const BROWSER = {
   WebAssembly: 'readonly', AudioWorkletNode: 'readonly', crossOriginIsolated: 'readonly',
   AudioContext: 'readonly', OfflineAudioContext: 'readonly', Worker: 'readonly',
   fetch: 'readonly', performance: 'readonly', caches: 'readonly', URL: 'readonly',
-  setInterval: 'readonly', clearInterval: 'readonly', setTimeout: 'readonly',
+  setInterval: 'readonly', clearInterval: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly',
   Float32Array: 'readonly', Int16Array: 'readonly',
 };
 const NODE = {
