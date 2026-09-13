@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#F2E8D6">
+  <meta name="description" content="See who holds the floor. Speaker diarization that runs entirely in your browser.">
+  <title>Ronda</title>
+  <!-- Restores cross-origin isolation on hosts that cannot set COOP/COEP
+       headers (GitHub Pages), enabling multi-threaded WASM. See ADR 0001. -->
+  <script src="./coi-serviceworker.js"></script>
+  <link rel="stylesheet" href="/src/ui/styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>Ronda</h1>
+      <p class="sub" id="tagline"></p>
+    </header>
+    <section id="status" class="status"></section>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "ronda",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "See who holds the floor. Speaker diarization that runs entirely in your browser.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "node scripts/sync-ort-wasm.mjs && vite",
+    "build": "node scripts/sync-ort-wasm.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . && tsc --noEmit"
+  },
+  "devDependencies": {
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.18.0",
+    "vite": "^8.3.0",
+    "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "onnxruntime-web": "^1.29.0"
+  }
+}
