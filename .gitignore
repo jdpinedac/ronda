@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# Phase 0 spike: throwaway code and large downloaded fixtures
+spike/models/
+spike/audio/
+spike/node_modules/
+
+# Model weights are managed with Git LFS; keep scratch copies out
+public/models/*.onnx
