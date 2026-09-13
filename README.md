@@ -92,6 +92,10 @@ Architecture decisions live in [`docs/adr/`](docs/adr/), the design spec in
 [`docs/superpowers/specs/`](docs/superpowers/specs/), and the throwaway feasibility
 probe in [`spike/`](spike/).
 
+## Authors
+
+Ana Lopez and Juan Pineda.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
