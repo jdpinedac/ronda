@@ -106,3 +106,9 @@ a.btn-go { display: block; }
 .diag dl { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; margin: 10px 0 0; font-size: 12.5px; }
 .diag dt { color: var(--muted); }
 .diag dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.warning {
+  margin: 0 0 16px; padding: 12px 14px;
+  background: rgba(201, 147, 43, .14); color: #7A5A12;
+  border-radius: 10px; font-size: 13px; line-height: 1.55;
+}

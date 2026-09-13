@@ -62,6 +62,14 @@ const STRINGS = {
     en: 'I could not find enough speech in that recording.',
   },
   analyseFailed: { es: 'No pude analizar ese archivo.', en: 'I could not analyse that file.' },
+  lowConfidence: {
+    es: 'Encontré pocos fragmentos de voz claros, así que este reparto es poco fiable. Suele pasar con grabaciones cortas, con mucho ruido de fondo, o cuando alguien habla muy poco.',
+    en: 'I found few clear stretches of speech, so this split is not reliable. That usually means a short recording, a lot of background noise, or someone who barely spoke.',
+  },
+  insufficient: {
+    es: 'No encontré suficientes fragmentos de voz claros para separar a las personas. Prueba con una grabación más larga, o con menos ruido de fondo.',
+    en: 'I could not find enough clear speech to tell people apart. Try a longer recording, or one with less background noise.',
+  },
   unsupported: {
     es: 'Este navegador no puede ejecutar Ronda. Hace falta WebAssembly y acceso al micrófono.',
     en: 'This browser cannot run Ronda. WebAssembly and microphone access are required.',

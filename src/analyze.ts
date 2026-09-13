@@ -116,6 +116,11 @@ function render(result: DiarizationResult) {
   if (el) el.hidden = false;
 }
 
+function renderWarning(message: string) {
+  const el = $('warning');
+  if (el) { el.textContent = message; el.hidden = false; }
+}
+
 function renderDiagnostics(result: DiarizationResult) {
   const el = $('diagnostics');
   if (!el) return;
@@ -141,6 +146,8 @@ goButton?.addEventListener('click', async () => {
   goButton.disabled = true;
   const errorEl = $('error');
   if (errorEl) errorEl.hidden = true;
+  const warnEl = $('warning');
+  if (warnEl) warnEl.hidden = true;
 
   try {
     showProgress(t('loadingTheModels'));
@@ -162,8 +169,16 @@ goButton?.addEventListener('click', async () => {
 
     (window as unknown as { __ronda?: unknown }).__ronda = result;
     renderDiagnostics(result);
-    if (result.speakers.length === 0) showError(t('noSpeech'));
-    else render(result);
+    if (result.speakers.length === 0) {
+      showError(t('noSpeech'));
+    } else if (result.reliability === 'insufficient') {
+      showError(t('insufficient'));
+      renderWarning(t('insufficient'));
+      render(result);
+    } else {
+      if (result.reliability === 'low') renderWarning(t('lowConfidence'));
+      render(result);
+    }
   } catch (err) {
     const progressEl = $('progress');
     if (progressEl) progressEl.hidden = true;

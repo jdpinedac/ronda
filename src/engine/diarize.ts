@@ -42,6 +42,31 @@ export interface Diagnostics {
   discardedShortMs: number;
 }
 
+/**
+ * How much the result can be trusted.
+ *
+ * 'insufficient' — too little clear speech to separate anyone. Reporting a
+ *   split here would be invention.
+ * 'low' — a split was produced, but from too few voice samples per person for
+ *   it to mean much.
+ * 'good' — enough samples for the numbers to be worth reading.
+ */
+export type Reliability = 'good' | 'low' | 'insufficient';
+
+/** Below this many voice samples per person, a split is not worth trusting. */
+const SAMPLES_PER_SPEAKER_FOR_CONFIDENCE = 3;
+
+/**
+ * A result built from a handful of voice samples is arithmetic, not evidence.
+ * Saying so is more useful than a confident-looking pie chart: with only two
+ * samples and two names, each sample simply becomes its own "speaker", which
+ * looks exactly like a real result and is not one.
+ */
+export function assessReliability(samples: number, speakers: number): Reliability {
+  if (samples < 2 || speakers === 0) return 'insufficient';
+  return samples / speakers < SAMPLES_PER_SPEAKER_FOR_CONFIDENCE ? 'low' : 'good';
+}
+
 export interface DiarizationResult {
   speakers: SpeakerResult[];
   /** Every labelled speech span, in time order. */
@@ -51,6 +76,7 @@ export interface DiarizationResult {
   silenceMs: number;
   totalMs: number;
   countHint: SpeakerCountHint;
+  reliability: Reliability;
   diagnostics: Diagnostics;
 }
 
@@ -158,6 +184,8 @@ export async function diarize(
     }))
     .sort((a, b) => b.totalMs - a.totalMs);
 
+  const reliability = assessReliability(vectors.length, speakers.length);
+
   opts.onProgress?.(1, 'done');
   return {
     speakers,
@@ -168,6 +196,7 @@ export async function diarize(
     silenceMs,
     totalMs,
     countHint,
+    reliability,
     diagnostics: {
       windows: plan.length,
       spansTotal: allSpans.length,
