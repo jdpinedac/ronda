@@ -65,18 +65,34 @@ for attaching real names; it supplies K, which is the single most valuable piece
 information in the pipeline. The prototype's existing "who is at the table" name field
 already collects it.
 
-**Cost is not a constraint.** Measured in Chrome, WASM backend, int8:
+**Cost is not a constraint.** Measured in Chrome on an 8-core desktop, WASM backend,
+cross-origin isolated so that multi-threading was available:
 
-| | |
-|---|---|
-| Model download | 8.2 MB (1.54 + 6.69), cached after first visit |
-| Segmentation, 10 s window | 93 ms |
-| Embedding, 2 s segment | 67 ms |
-| **Live budget per 5 s hop** | **160 ms = 3.2% of one core** |
+| | int8 | fp32 |
+|---|---|---|
+| Model download | 8.2 MB | 32.5 MB |
+| Cold load (network + init) | 5.0 s | 4.7 s |
+| Segmentation, 10 s window | 93 ms | 47 ms |
+| Embedding, 2 s segment | 67 ms | 85 ms |
+| **Live budget per 5 s hop** | **160 ms = 3.2% of one core** | **132 ms = 2.6%** |
 
-A mid-range phone an order of magnitude slower still lands around 32%, so real-time
-operation is comfortable. The earlier concern that neural diarization would be too
+A mid-range phone an order of magnitude slower still lands around 32% of one core, so
+real-time operation is comfortable. The concern that neural diarization would be too
 heavy for the browser is simply wrong at these model sizes.
+
+**int8 is not faster than fp32 here — it is only smaller.** fp32 segmentation ran
+roughly twice as fast as int8, and the full fp32 hop was cheaper overall. x86 WASM
+without VNNI gains little from int8 arithmetic while paying dequantization overhead.
+int8 remains the default purely because 8.2 MB versus 32.5 MB is the difference
+between a tolerable and an irritating first visit on mobile data. Anyone on a fast
+connection should prefer fp32, and the "high accuracy" setting is therefore also the
+"slightly faster" setting.
+
+**WebGPU could not be measured.** `navigator.gpu` was present but no adapter could be
+acquired on the test machine, so both WebGPU runs failed. The backend probe order in
+the spec still stands, but WebGPU's benefit is unverified — and given that WASM
+already costs about 3% of a core, it is an optimization with nothing left to optimize.
+Treat WebGPU support as optional rather than planned work.
 
 **Accepted limitations.** Turn boundaries are fixed by the live pass and cannot be
 recomputed on stop, because audio is discarded immediately after embedding extraction.
