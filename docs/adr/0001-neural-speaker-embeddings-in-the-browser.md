@@ -88,6 +88,22 @@ between a tolerable and an irritating first visit on mobile data. Anyone on a fa
 connection should prefer fp32, and the "high accuracy" setting is therefore also the
 "slightly faster" setting.
 
+**Multi-threading is unavailable in production, and fails silently.** The figures
+above were measured with real COOP/COEP response headers. GitHub Pages cannot send
+those, so the deployed site gets cross-origin isolation from `coi-serviceworker`
+instead — and under that arrangement ORT's worker threads never start. Session
+creation does not fail; it hangs indefinitely. `crossOriginIsolated` reports `true`
+either way, so the two situations cannot be told apart at runtime.
+
+Measured on the deployed site: one thread creates a session in 0.3 s, four threads had
+not returned after 15 s. The app therefore pins `numThreads = 1`, which is the only
+setting that works both locally and in production, and wraps loading in a timeout so
+the failure mode is an error message rather than a blank wait.
+
+Single-threaded throughput is still comfortable: 34 seconds of audio analysed end to
+end in under 10 seconds on the deployed site, models already cached. This is the
+figure to plan against, not the multi-threaded one above.
+
 **WebGPU could not be measured.** `navigator.gpu` was present but no adapter could be
 acquired on the test machine, so both WebGPU runs failed. The backend probe order in
 the spec still stands, but WebGPU's benefit is unverified — and given that WASM

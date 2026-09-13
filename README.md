@@ -46,9 +46,13 @@ Measured in Chrome on an 8-core desktop, int8 models, WASM backend:
 | | |
 |---|---|
 | First visit download | ~11.7 MB compressed (3.4 MB runtime + 8.2 MB models), then cached |
-| Segmentation, 10 s window | 93 ms |
-| Embedding, 2 s segment | 67 ms |
-| **Continuous cost while listening** | **about 3% of one core** |
+| 34 s of audio, analysed end to end | under 10 s, single-threaded, models cached |
+| Segmentation, 10 s window | 93 ms (multi-threaded; see the note below) |
+| Embedding, 2 s segment | 67 ms (multi-threaded) |
+
+Inference runs single-threaded. GitHub Pages cannot send the COOP/COEP headers that
+multi-threaded WASM needs, and under the service-worker substitute ORT's threads hang
+instead of starting. One thread is the only setting that works everywhere.
 
 Full methodology and the separation-quality measurements are in
 [ADR 0001](docs/adr/0001-neural-speaker-embeddings-in-the-browser.md).
