@@ -49,3 +49,54 @@ h2 { font-size: 15px; font-weight: 600; margin: 32px 0 8px; }
 .ready { font-size: 13.5px; color: var(--ok); margin: 0 0 12px; }
 footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); }
 footer a { font-size: 12.5px; color: var(--muted); }
+
+/* --- analysis page --- */
+.setup { margin-top: 24px; }
+.field { display: block; margin-bottom: 14px; }
+.field > span { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 5px; }
+.field small { display: block; font-size: 12px; color: var(--muted); margin-top: 5px; }
+input[type="text"] {
+  width: 100%; font: inherit; font-size: 15px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px;
+}
+.controls { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.filename { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.btn { font: inherit; border: 1px solid var(--line); cursor: pointer; }
+.btn-go { background: var(--ink); color: var(--bg); border: none; width: 100%; padding: 13px; }
+.btn-go:disabled { opacity: .4; cursor: not-allowed; }
+.progress { font-size: 13.5px; color: var(--muted); margin: 16px 0; }
+.error {
+  margin: 16px 0; padding: 12px 14px; background: rgba(156, 61, 61, .1);
+  color: var(--danger); border-radius: 10px; font-size: 13.5px; line-height: 1.5;
+}
+
+.dial-wrap { position: relative; width: 240px; height: 240px; margin: 20px auto 0; }
+svg.dial { width: 240px; height: 240px; display: block; }
+.dial-track { fill: none; stroke: rgba(51, 38, 28, .08); stroke-width: 28; }
+.dial-seg { fill: none; stroke-width: 28; stroke-linecap: round; }
+.dial-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; pointer-events: none;
+}
+.center-time {
+  font-family: Iowan Old Style, Palatino Linotype, Georgia, serif;
+  font-variant-numeric: tabular-nums; font-size: 34px; line-height: 1;
+}
+.center-label { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+
+.legend { list-style: none; margin: 26px 0 0; padding: 0; }
+.legend-row {
+  display: flex; align-items: center; gap: 8px; padding: 10px 0;
+  border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums;
+}
+.legend-row:first-child { border-top: 1px solid var(--line); }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.name { font-size: 15px; }
+.leader { flex: 1 1 auto; border-bottom: 1px dotted var(--line); height: 0; align-self: flex-end; transform: translateY(-6px); }
+.stat { font-size: 14px; white-space: nowrap; }
+.pct { font-size: 12.5px; color: var(--muted); min-width: 3.4ch; text-align: right; }
+.meta { font-size: 12.5px; color: var(--muted); margin: 14px 0 0; line-height: 1.6; }
+.card-quiet { background: transparent; }
+a.btn { text-align: center; }
+a.btn-go { display: block; }

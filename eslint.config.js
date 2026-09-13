@@ -9,7 +9,10 @@ const BROWSER = {
   setInterval: 'readonly', clearInterval: 'readonly', setTimeout: 'readonly',
   Float32Array: 'readonly', Int16Array: 'readonly',
 };
-const NODE = { console: 'readonly', process: 'readonly', URL: 'readonly', __dirname: 'readonly' };
+const NODE = {
+  console: 'readonly', process: 'readonly', URL: 'readonly', __dirname: 'readonly',
+  fetch: 'readonly', Buffer: 'readonly',
+};
 
 export default tseslint.config(
   { ignores: ['dist/', 'spike/', 'public/', 'example/'] },

@@ -9,6 +9,9 @@ const setText = (id: string, value: string) => {
 };
 
 setText('tagline', t('tagline'));
+setText('analyse-cta', t('analyseCta'));
+setText('analyse-cta-body', t('analyseCtaBody'));
+setText('analyse-link', t('analyse'));
 setText('building-title', t('buildingTitle'));
 setText('building-body', t('buildingBody'));
 setText('try-prototype', t('tryPrototype'));

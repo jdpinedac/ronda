@@ -6,7 +6,16 @@ const base = process.env.BASE_PATH ?? '/ronda/';
 
 export default defineConfig({
   base,
-  build: { target: 'es2022', sourcemap: true },
+  build: {
+    target: 'es2022',
+    sourcemap: true,
+    rollupOptions: {
+      input: {
+        index: 'index.html',
+        analyze: 'analyze.html',
+      },
+    },
+  },
   worker: { format: 'es' },
   // onnxruntime-web loads its .wasm binaries at runtime from public/ort/,
   // populated by scripts/sync-ort-wasm.mjs. Keep them out of the bundle.

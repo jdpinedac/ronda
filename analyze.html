@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#F2E8D6">
+  <title>Ronda — analizar</title>
+  <script src="./coi-serviceworker.js"></script>
+  <link rel="stylesheet" href="/src/ui/styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>Ronda</h1>
+      <p class="sub" id="analyse-body"></p>
+    </header>
+
+    <section class="setup">
+      <label class="field">
+        <span id="names-label"></span>
+        <input type="text" id="names" placeholder="Ana, Juan, Marta…" autocomplete="off">
+        <small id="names-hint"></small>
+      </label>
+
+      <div class="controls">
+        <input type="file" id="file" accept="audio/*" hidden>
+        <button class="btn" id="choose" disabled></button>
+        <span id="filename" class="filename"></span>
+      </div>
+      <button class="btn btn-go" id="go" disabled></button>
+    </section>
+
+    <p id="progress" class="progress" hidden></p>
+    <p id="error" class="error" hidden></p>
+
+    <section id="results" hidden>
+      <h2 id="results-title"></h2>
+      <div class="dial-wrap">
+        <svg class="dial" viewBox="0 0 240 240" aria-hidden="true">
+          <circle class="dial-track" cx="120" cy="120" r="100"></circle>
+          <g id="segments" transform="rotate(-90 120 120)"></g>
+        </svg>
+        <div class="dial-center">
+          <div id="center-time" class="center-time">0:00</div>
+          <div class="center-label" id="center-label"></div>
+        </div>
+      </div>
+      <ul id="legend" class="legend"></ul>
+      <p id="meta" class="meta"></p>
+      <p id="count-note" class="meta"></p>
+    </section>
+
+    <footer><a href="./">← Ronda</a></footer>
+  </main>
+  <script type="module" src="/src/analyze.ts"></script>
+</body>
+</html>

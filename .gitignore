@@ -9,7 +9,6 @@ spike/audio/
 spike/node_modules/
 
 # Model weights are managed with Git LFS; keep scratch copies out
-public/models/*.onnx
+public/models/
 spike/bench/test.wav
-public/ort/
 public/prototype/

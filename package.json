@@ -6,8 +6,8 @@
   "description": "See who holds the floor. Speaker diarization that runs entirely in your browser.",
   "license": "MIT",
   "scripts": {
-    "dev": "node scripts/sync-ort-wasm.mjs && node scripts/stage-prototype.mjs && vite",
-    "build": "node scripts/sync-ort-wasm.mjs && node scripts/stage-prototype.mjs && tsc --noEmit && vite build",
+    "dev": "node scripts/fetch-models.mjs && node scripts/stage-prototype.mjs && vite",
+    "build": "node scripts/fetch-models.mjs && node scripts/stage-prototype.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
