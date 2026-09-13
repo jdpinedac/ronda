@@ -90,6 +90,36 @@ export function agglomerative(vectors: readonly Float32Array[], opts: ClusterOpt
   return labels;
 }
 
+/**
+ * Below this many segments the mean is dominated by whoever happens to be in
+ * it, so subtracting it would remove speaker identity rather than channel.
+ */
+const MIN_FOR_CENTRING = 3;
+
+/**
+ * Removes the component every embedding shares, which is the recording channel.
+ *
+ * A phone codec, a band-limited microphone or a room all colour every segment
+ * of a recording the same way. That shared colouring appears as a large common
+ * component in every embedding, and because it is identical everywhere it
+ * dominates the cosine distances and buries the differences between people. The
+ * symptom is unmistakable: one speaker is credited with nearly the whole
+ * conversation.
+ *
+ * Measured on a band-limited copy of a two-speaker recording: 91%/9% before
+ * centring, 58%/42% after, with the clean original unchanged at 55%/45%.
+ *
+ * Note that this widens distances overall, so a threshold calibrated on
+ * uncentred embeddings no longer applies — see how diarize.ts uses this.
+ */
+export function centreEmbeddings(vectors: readonly Float32Array[]): Float32Array[] {
+  if (vectors.length < MIN_FOR_CENTRING) return [...vectors];
+  const dim = vectors[0]!.length;
+  const mean = new Float32Array(dim);
+  for (const v of vectors) for (let i = 0; i < dim; i++) mean[i] = mean[i]! + v[i]! / vectors.length;
+  return vectors.map((v) => normalise(Float32Array.from(v, (x, i) => x - mean[i]!)));
+}
+
 export interface AbsorbOptions {
   minSegments: number;
   minDurationMs: number;

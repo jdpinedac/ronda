@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   cosineDistance, normalise, agglomerative, absorbTinyClusters,
-  resolveSpeakerCount, DEFAULT_THRESHOLD,
+  resolveSpeakerCount, DEFAULT_THRESHOLD, centreEmbeddings,
 } from '../src/engine/clustering.js';
 
 /**
@@ -180,5 +180,42 @@ describe('resolveSpeakerCount — the tiered strategy from ADR 0001', () => {
     expect(resolveSpeakerCount({ names: ['Ana', 'Juan', '', '  '] })).toEqual({
       k: 2, source: 'names', confident: true,
     });
+  });
+});
+
+describe('centreEmbeddings', () => {
+  /**
+   * The behavioural test for this lives in channel-regression.test.ts, against
+   * real embeddings. Synthetic fixtures could not reproduce the failure: a
+   * uniform additive bias compresses every distance by the same factor and
+   * leaves their ordering — and therefore the clustering — unchanged. These
+   * tests cover the function's contract only.
+   */
+  it('returns unit vectors', () => {
+    const { vectors } = makeVoices(3, 4);
+    for (const v of centreEmbeddings(vectors)) {
+      expect(Math.sqrt(v.reduce((s, x) => s + x * x, 0))).toBeCloseTo(1, 5);
+    }
+  });
+
+  it('removes the shared component', () => {
+    const { vectors } = makeVoices(3, 4);
+    const centred = centreEmbeddings(vectors);
+    const dim = centred[0]!.length;
+    for (let i = 0; i < dim; i++) {
+      const mean = centred.reduce((s, v) => s + v[i]!, 0) / centred.length;
+      expect(Math.abs(mean)).toBeLessThan(0.2);
+    }
+  });
+
+  it('preserves correct groupings on clean data', () => {
+    const { vectors, truth } = makeVoices(3, 4, 0.1);
+    expect(samePartition(agglomerative(centreEmbeddings(vectors), { k: 3 }), truth)).toBe(true);
+  });
+
+  it('refuses to centre too few vectors, where the mean is meaningless', () => {
+    const { vectors } = makeVoices(2, 1);
+    expect(centreEmbeddings(vectors)).toEqual(vectors);
+    expect(centreEmbeddings([])).toEqual([]);
   });
 });

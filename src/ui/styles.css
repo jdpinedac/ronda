@@ -100,3 +100,9 @@ svg.dial { width: 240px; height: 240px; display: block; }
 .card-quiet { background: transparent; }
 a.btn { text-align: center; }
 a.btn-go { display: block; }
+
+.diag { margin-top: 18px; }
+.diag summary { cursor: pointer; font-size: 12.5px; color: var(--muted); padding: 4px 0; }
+.diag dl { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; margin: 10px 0 0; font-size: 12.5px; }
+.diag dt { color: var(--muted); }
+.diag dd { margin: 0; font-variant-numeric: tabular-nums; }

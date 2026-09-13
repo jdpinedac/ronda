@@ -116,6 +116,26 @@ function render(result: DiarizationResult) {
   if (el) el.hidden = false;
 }
 
+function renderDiagnostics(result: DiarizationResult) {
+  const el = $('diagnostics');
+  if (!el) return;
+  const d = result.diagnostics;
+  const rows: [string, string][] = [
+    ['windows analysed', String(d.windows)],
+    ['spans found', String(d.spansTotal)],
+    ['one speaker only', String(d.spansSingleSpeaker)],
+    ['long enough to use', String(d.spansLongEnough)],
+    ['voice prints taken', String(d.embeddings)],
+    ['speech detected', `${(d.speechMs / 1000).toFixed(1)} s`],
+    ['longest single stretch', `${(d.longestSpanMs / 1000).toFixed(1)} s`],
+    ['dropped as too short', `${(d.discardedShortMs / 1000).toFixed(1)} s`],
+    ['speaker count from', result.countHint.source],
+  ];
+  el.innerHTML = `<dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  const wrap = $('diagnostics-wrap');
+  if (wrap) wrap.hidden = false;
+}
+
 goButton?.addEventListener('click', async () => {
   if (!chosen) return;
   goButton.disabled = true;
@@ -140,6 +160,8 @@ goButton?.addEventListener('click', async () => {
     const progressEl = $('progress');
     if (progressEl) progressEl.hidden = true;
 
+    (window as unknown as { __ronda?: unknown }).__ronda = result;
+    renderDiagnostics(result);
     if (result.speakers.length === 0) showError(t('noSpeech'));
     else render(result);
   } catch (err) {
