@@ -74,6 +74,14 @@ const STRINGS = {
     es: 'Audio del AMI Corpus (CC-BY-4.0).',
     en: 'Audio from the AMI Corpus (CC-BY-4.0).',
   },
+  backgroundVoicesLabel: {
+    es: 'Hay una TV, radio o mesa vecina que se oye',
+    en: 'A television, radio or nearby table is audible',
+  },
+  backgroundVoicesHint: {
+    es: 'Deja sitio para esas voces, para que no se las atribuya a nadie de la mesa. Si no las hay, déjalo sin marcar: activarlo empeora el resultado.',
+    en: 'Leaves room for those voices so they are not credited to anyone at the table. If there are none, leave it unticked — turning it on makes results worse.',
+  },
   chooseFile: { es: 'Elegir archivo', en: 'Choose file' },
   analyse: { es: 'Analizar', en: 'Analyse' },
   namesHint: {

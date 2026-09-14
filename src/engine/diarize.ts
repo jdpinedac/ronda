@@ -89,6 +89,12 @@ export interface DiarizationResult {
 export interface DiarizeOptions {
   names?: readonly string[];
   calibratedProfiles?: number;
+  /**
+   * Set when a television, radio or neighbouring table is audible. Allows extra
+   * clusters so those voices get their own group instead of being forced into a
+   * participant's tally. Off by default: see CLUSTER_HEADROOM for why.
+   */
+  backgroundVoices?: boolean;
   onProgress?: (fraction: number, stage: string) => void;
 }
 
@@ -180,9 +186,8 @@ export async function diarize(
       // or the next table would otherwise be forced into somebody's tally, and
       // the cost is not a small error: it merges two real people to free a
       // slot. See CLUSTER_HEADROOM.
-      const wide = agglomerative(centreEmbeddings(vectors), {
-        k: countHint.k + CLUSTER_HEADROOM,
-      });
+      const headroom = opts.backgroundVoices ? CLUSTER_HEADROOM : 0;
+      const wide = agglomerative(centreEmbeddings(vectors), { k: countHint.k + headroom });
       labels = keepBusiest(wide, durationsOf(usable, vectors.length), countHint.k);
     } else {
       labels = agglomerative(vectors, { threshold: DEFAULT_THRESHOLD });

@@ -10,6 +10,8 @@ const setText = (id: string, v: string) => { const el = $(id); if (el) el.textCo
 setText('live-body', t('liveBody'));
 setText('names-label', t('namesLabel'));
 setText('names-hint', t('namesHint'));
+setText('bg-voices-label', t('backgroundVoicesLabel'));
+setText('bg-voices-hint', t('backgroundVoicesHint'));
 setText('center-label', t('spokenTime'));
 setText('badge-text', t('waiting'));
 setText('hint', t('tellTheTable'));
@@ -178,7 +180,8 @@ async function start() {
   }
 
   const names = (namesInput?.value ?? '').split(',').map((n) => n.trim()).filter(Boolean);
-  session = await startLiveSession({ names });
+  const bgVoices = ($('bg-voices') as HTMLInputElement | null)?.checked ?? false;
+  session = await startLiveSession({ names, backgroundVoices: bgVoices });
   session.onUpdate(render);
   capture.onAudio((samples) => session?.push(samples));
 

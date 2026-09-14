@@ -65,21 +65,13 @@ case Ronda is built for — scored against human annotation of who spoke when:
 
 | | |
 |---|---|
-| **Diarization error rate** | **0.219** |
+| **Diarization error rate** | **0.199** |
 | Speakers found | 4 of 4 |
 | Time share | 35/31/21/13 against a true 32/32/19/16 |
 | Speech attributed to the wrong person | 3.2 s of 170 s (1.9%) |
 | Speech not attributed at all | 27.7 s |
 
-That 0.219 is up from 0.199, and deliberately so. Ronda now clusters with room for
-voices that are not participants and keeps only the busiest groups, which occasionally
-discards real speech — the two points of DER. It buys a much worse failure being fixed:
-cutting at exactly the number of people present forces a television into somebody's
-tally, and to free the slot it merges two real people into one. On a recording with
-chatter under a four-person meeting, the split went from 31/31/20/18 to 35/23/22/20
-against a true 34/23/22/21.
-
-Most of the remaining error is not confusion but omission, and most of that omission is
+Most of the error is not confusion but omission, and most of that omission is
 deliberate: 20.6 s of it is people talking over each other, which Ronda detects but
 does not attribute, because an embedding taken from two mixed voices belongs to
 neither. Another 5.9 s is stretches too short to identify reliably.
@@ -90,7 +82,16 @@ mostly misses on purpose. Reproduce with `spike/08-fetch-ami.py` and
 
 ## Limitations, stated plainly
 
-- Voices in the same range — siblings, similar timbres — are the most common confusion.
+- Voices in the same range are the most common confusion, and the effect is large. On
+  a two-woman conversation from the AMI corpus, Ronda got the time split nearly right —
+  62/38 against a true 60/40 — while misattributing 40% of the moment-to-moment speech
+  between them. The totals can be trustworthy while who-said-what is not.
+- If a television, radio or nearby table is audible, tick the box that says so. Ronda
+  then leaves room for those voices instead of crediting them to someone at the table.
+  Leave it unticked otherwise: measured against annotated recordings, turning it on
+  when there are no intruders makes results worse (a two-woman split went from 62/38 to
+  72/28, and meeting error rose from 0.199 to 0.219). Nothing in the audio distinguishes
+  the two situations reliably, so the person in the room is asked rather than guessed at.
 - Speech from outside the conversation — the next table, a television — is handled two
   ways: rejected by loudness when it is distant, and given its own group and discarded
   when it is close enough to be loud. Neither is perfect. A soft-spoken person at the

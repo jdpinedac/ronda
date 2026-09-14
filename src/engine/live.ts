@@ -62,6 +62,8 @@ export interface LiveSession {
 export interface LiveOptions {
   names?: readonly string[];
   calibratedProfiles?: number;
+  /** A television, radio or neighbouring table is audible. See CLUSTER_HEADROOM. */
+  backgroundVoices?: boolean;
 }
 
 export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSession> {
@@ -138,9 +140,9 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     if (vectors.length > 0) {
       labels = countHint.k !== null
         ? keepBusiest(
-          // Headroom so a television or the next table gets its own group
-          // instead of being forced into somebody's tally. See CLUSTER_HEADROOM.
-          agglomerative(centreEmbeddings(vectors), { k: countHint.k + CLUSTER_HEADROOM }),
+          agglomerative(centreEmbeddings(vectors), {
+            k: countHint.k + (opts.backgroundVoices ? CLUSTER_HEADROOM : 0),
+          }),
           durations,
           countHint.k,
         )

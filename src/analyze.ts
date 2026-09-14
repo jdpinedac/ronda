@@ -9,6 +9,8 @@ const setText = (id: string, v: string) => { const el = $(id); if (el) el.textCo
 setText('analyse-body', t('analyseBody'));
 setText('names-label', t('namesLabel'));
 setText('names-hint', t('namesHint'));
+setText('bg-voices-label', t('backgroundVoicesLabel'));
+setText('bg-voices-hint', t('backgroundVoicesHint'));
 setText('choose', t('chooseFile'));
 setText('example', t('tryExample'));
 setText('go', t('analyse'));
@@ -194,8 +196,10 @@ goButton?.addEventListener('click', async () => {
     const audio = await decodeTo16kMono(chosen);
     const names = (namesInput?.value ?? '').split(',').map((n) => n.trim()).filter(Boolean);
 
+    const bgVoices = ($('bg-voices') as HTMLInputElement | null)?.checked ?? false;
     const result = await diarize(audio, {
       names,
+      backgroundVoices: bgVoices,
       onProgress: (fraction, stage) => {
         const label = stage === 'segmenting' ? t('segmenting') : t('identifying');
         showProgress(`${label} ${Math.round(fraction * 100)}%`);

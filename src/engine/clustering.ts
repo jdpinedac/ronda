@@ -176,24 +176,29 @@ export function absorbTinyClusters(
 }
 
 /**
- * Extra clusters allowed beyond the number of people said to be present.
+ * Extra clusters allowed when the room is known to contain voices that are not
+ * participants — a television, the next table.
  *
- * A television, the next table, a passing colleague: a recording routinely
- * contains voices that are not participants. Cutting the dendrogram at exactly
- * the number of people forces those voices into somebody's tally, and the
- * damage is not a small error — it merges two real people into one cluster to
- * free a slot. Ana's test had three people plus a television playing a
- * two-person dialogue, and two of the three were merged.
+ * This is off by default, and that default is measured. Against human
+ * annotation, headroom makes things worse when there are no intruders: a
+ * two-woman conversation went from 62/38 to 72/28 against a true 60/40, and a
+ * four-person meeting's error rate rose from 0.199 to 0.219. Surplus groups are
+ * usually not intruders — they are one person who sounded different for a while
+ * — and discarding them throws away real speech.
  *
- * Giving the clustering room to put intruders in their own groups, then keeping
- * only the busiest, assumes the people at the table speak more than the
- * background. Measured on a recording with chatter underneath a four-person
- * meeting: 31/31/20/18 at exactly four, against a true 34/23/22/21; with
- * headroom, 35/23/22/20.
+ * When there really is a television, the picture reverses. Cutting at exactly
+ * the number of people forces those voices into somebody's tally, and to free a
+ * slot it merges two real people into one. On a recording with chatter under a
+ * four-person meeting, headroom moved the split from 31/31/20/18 to 35/23/22/20
+ * against a true 34/23/22/21.
+ *
+ * Nothing in the audio reliably distinguishes the two situations — surplus
+ * groups in the two-woman case sat further from the main groups (1.181) than
+ * genuine intruders did (0.865). The person in the room knows; Ronda does not.
+ * So it is asked, not guessed.
  */
 export const CLUSTER_HEADROOM = 2;
 
-/** Marks a stretch as belonging to no participant. */
 export const OTHER_VOICE = -1;
 
 /**
