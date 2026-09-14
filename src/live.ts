@@ -23,6 +23,31 @@ let capture: Capture | null = null;
 let session: LiveSession | null = null;
 let meterTimer: number | null = null;
 let running = false;
+let wakeLock: WakeLockSentinel | null = null;
+
+/**
+ * A phone in the middle of the table will blank its screen within a minute, and
+ * a blanked screen suspends the audio graph. Holding a wake lock is what makes
+ * the intended use — set it down and talk — actually work. Not every browser
+ * offers one; where it is missing, listening still works while the screen is on.
+ */
+async function holdScreenAwake() {
+  try {
+    if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+  } catch {
+    // Denied or unsupported; not worth interrupting the user over.
+  }
+}
+
+function releaseScreen() {
+  void wakeLock?.release().catch(() => {});
+  wakeLock = null;
+}
+
+// Wake locks are dropped when a tab is hidden and must be re-taken on return.
+document.addEventListener('visibilitychange', () => {
+  if (running && document.visibilityState === 'visible') void holdScreenAwake();
+});
 
 setText('toggle', t('listen'));
 if (toggle) toggle.disabled = false;
@@ -162,6 +187,7 @@ async function start() {
 
   const badge = $('badge');
   badge?.classList.add('on');
+  void holdScreenAwake();
 
   meterTimer = window.setInterval(() => {
     const fill = $('meter-fill');
@@ -175,6 +201,7 @@ async function stop() {
   running = false;
   if (toggle) toggle.disabled = true;
   if (meterTimer !== null) { clearInterval(meterTimer); meterTimer = null; }
+  releaseScreen();
   await capture?.stop();
   capture = null;
   await session?.flush();

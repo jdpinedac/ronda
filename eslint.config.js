@@ -7,7 +7,7 @@ const BROWSER = {
   AudioContext: 'readonly', OfflineAudioContext: 'readonly', Worker: 'readonly',
   fetch: 'readonly', performance: 'readonly', caches: 'readonly', URL: 'readonly',
   setInterval: 'readonly', clearInterval: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly',
-  Float32Array: 'readonly', Int16Array: 'readonly',
+  Float32Array: 'readonly', Int16Array: 'readonly', WakeLockSentinel: 'readonly',
 };
 const NODE = {
   console: 'readonly', process: 'readonly', URL: 'readonly', __dirname: 'readonly',
