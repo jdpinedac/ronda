@@ -165,6 +165,8 @@ function renderDiagnostics(result: DiarizationResult) {
     ['spans found', String(d.spansTotal)],
     ['one speaker only', String(d.spansSingleSpeaker)],
     ['long enough to use', String(d.spansLongEnough)],
+    ['at the table', String(d.spansInForeground)],
+    ['too far away, dropped', `${(d.backgroundMs / 1000).toFixed(1)} s`],
     ['voice prints taken', String(d.embeddings)],
     ['speech detected', `${(d.speechMs / 1000).toFixed(1)} s`],
     ['longest single stretch', `${(d.longestSpanMs / 1000).toFixed(1)} s`],
@@ -211,7 +213,13 @@ goButton?.addEventListener('click', async () => {
       renderWarning(t('insufficient'));
       render(result);
     } else {
-      if (result.reliability === 'low') renderWarning(t('lowConfidence'));
+      // Without a speaker count, background chatter inflates the tally. Point
+      // at the fix that works rather than leaving the user to wonder.
+      if (!result.countHint.confident && result.speakers.length > 4) {
+        renderWarning(t('tooManySpeakers'));
+      } else if (result.reliability === 'low') {
+        renderWarning(t('lowConfidence'));
+      }
       render(result);
     }
   } catch (err) {

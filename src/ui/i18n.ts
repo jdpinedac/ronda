@@ -96,6 +96,10 @@ const STRINGS = {
     en: 'I could not find enough speech in that recording.',
   },
   analyseFailed: { es: 'No pude analizar ese archivo.', en: 'I could not analyse that file.' },
+  tooManySpeakers: {
+    es: '¿Salieron más personas de las que hay? Suele ser ruido de voces de fondo. Escribe los nombres de quienes están en la mesa: saber cuántos son es lo que más ayuda.',
+    en: 'More people than there are? That is usually background chatter. Type the names of who is at the table — knowing how many there are helps more than anything else.',
+  },
   lowConfidence: {
     es: 'Encontré pocos fragmentos de voz claros, así que este reparto es poco fiable. Suele pasar con grabaciones cortas, con mucho ruido de fondo, o cuando alguien habla muy poco.',
     en: 'I found few clear stretches of speech, so this split is not reliable. That usually means a short recording, a lot of background noise, or someone who barely spoke.',

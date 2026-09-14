@@ -13,9 +13,10 @@
  */
 import { computeFbank, WESPEAKER_FBANK } from './fbank.js';
 import {
-  agglomerative, centreEmbeddings, normalise, resolveSpeakerCount,
+  agglomerative, absorbTinyClusters, centreEmbeddings, normalise, resolveSpeakerCount,
   DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
+import { rms, selectForeground } from './levels.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
 import { decodeSegmentation, speechSpans } from './segmentation.js';
 import { assessReliability, type Reliability } from './diarize.js';
@@ -42,6 +43,8 @@ export interface LiveState {
   countHint: SpeakerCountHint;
   /** Voice samples taken so far. */
   samples: number;
+  /** Speech judged to come from outside the conversation. */
+  backgroundMs: number;
 }
 
 export interface LiveSession {
@@ -74,6 +77,9 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
 
   const vectors: Float32Array[] = [];
   const durations: number[] = [];
+  /** Levels of every stretch considered so far, for the background threshold. */
+  const levels: number[] = [];
+  let backgroundMs = 0;
   let lastSpeaker: number | null = null;
   let labels: number[] = [];
 
@@ -101,8 +107,21 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     const spans = decodeSegmentation(logits, SEGMENTATION_CLASSES, blockMs);
     const usable = speechSpans(spans, MIN_SPEECH_MS);
 
+    // Judge loudness against everything heard so far, so the threshold settles
+    // as the conversation establishes its own level.
+    const blockLevels = usable.map((s) => rms(block.subarray(
+      Math.round((s.startMs / 1000) * SAMPLE_RATE),
+      Math.round((s.endMs / 1000) * SAMPLE_RATE))));
+    const keep = selectForeground([...levels, ...blockLevels]).slice(levels.length);
+    levels.push(...blockLevels);
+
     let heard: number | null = null;
-    for (const s of usable) {
+    for (let i = 0; i < usable.length; i++) {
+      const s = usable[i]!;
+      if (!keep[i]) {
+        backgroundMs += s.endMs - s.startMs;
+        continue;
+      }
       const from = Math.round((s.startMs / 1000) * SAMPLE_RATE);
       const to = Math.round((s.endMs / 1000) * SAMPLE_RATE);
       const { frames, numBins } = computeFbank(block.subarray(from, to), WESPEAKER_FBANK);
@@ -117,7 +136,12 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     if (vectors.length > 0) {
       labels = countHint.k !== null
         ? agglomerative(centreEmbeddings(vectors), { k: countHint.k })
-        : agglomerative(vectors, { threshold: DEFAULT_THRESHOLD });
+        : absorbTinyClusters(
+          vectors,
+          agglomerative(vectors, { threshold: DEFAULT_THRESHOLD }),
+          durations,
+          { minSegments: 2, minDurationMs: 2000 },
+        );
     }
     lastSpeaker = heard !== null ? (labels[heard] ?? null) : null;
   }
@@ -148,6 +172,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       reliability: assessReliability(vectors.length, speakers.length),
       countHint,
       samples: vectors.length,
+      backgroundMs,
     };
   }
 

@@ -83,6 +83,11 @@ mostly misses on purpose. Reproduce with `spike/08-fetch-ami.py` and
 ## Limitations, stated plainly
 
 - Voices in the same range — siblings, similar timbres — are the most common confusion.
+- Speech from outside the conversation — the next table, a television — is rejected by
+  loudness when it falls in the gaps, but not when it runs continuously underneath the
+  people at the table. In that case it inflates the number of speakers. Typing the
+  names of who is present contains the damage, because the count then comes from you
+  rather than from the audio.
 - A single microphone at a large table is the hardest case. Expect approximation, not
   accounting.
 - When several people talk over each other for a long stretch, Ronda knows it is

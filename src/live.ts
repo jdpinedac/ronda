@@ -113,7 +113,10 @@ function render(state: LiveState) {
 
   const warn = $('warning');
   if (warn) {
-    if (state.samples > 0 && state.reliability !== 'good') {
+    if (!state.countHint.confident && state.speakers.length > 4) {
+      warn.textContent = t('tooManySpeakers');
+      warn.hidden = false;
+    } else if (state.samples > 0 && state.reliability !== 'good') {
       warn.textContent = state.reliability === 'insufficient' ? t('insufficient') : t('lowConfidence');
       warn.hidden = false;
     } else {
@@ -128,6 +131,7 @@ function render(state: LiveState) {
       <dt>voice samples</dt><dd>${state.samples}</dd>
       <dt>speakers</dt><dd>${state.speakers.length}</dd>
       <dt>speech heard</dt><dd>${(state.spokenMs / 1000).toFixed(1)} s</dd>
+      <dt>too far away, dropped</dt><dd>${(state.backgroundMs / 1000).toFixed(1)} s</dd>
       <dt>listening for</dt><dd>${(state.elapsedMs / 1000).toFixed(0)} s</dd>
       <dt>speaker count from</dt><dd>${state.countHint.source}</dd>
       <dt>reliability</dt><dd>${state.reliability}</dd>

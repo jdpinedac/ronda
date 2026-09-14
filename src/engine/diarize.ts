@@ -12,6 +12,7 @@ import {
 } from './clustering.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
 import { decodeSegmentation, speechSpans, type Span } from './segmentation.js';
+import { rms, selectForeground } from './levels.js';
 import { windowPlan } from './windows.js';
 
 const WINDOW_MS = 10_000;
@@ -36,6 +37,8 @@ export interface Diagnostics {
   spansTotal: number;
   spansSingleSpeaker: number;
   spansLongEnough: number;
+  spansInForeground: number;
+  backgroundMs: number;
   embeddings: number;
   speechMs: number;
   longestSpanMs: number;
@@ -119,7 +122,18 @@ export async function diarize(
 
   // --- embed ---
   const singleSpeaker = allSpans.filter((s) => s.speakers.length === 1);
-  const usable = speechSpans(allSpans, MIN_SPEECH_MS);
+  const candidates = speechSpans(allSpans, MIN_SPEECH_MS);
+
+  // Speech from outside the conversation — the next table, a television — is
+  // still speech, and counting it invents participants. Distance is what
+  // separates it. See levels.ts.
+  const levels = candidates.map((s) =>
+    rms(audio.subarray(msToSample(s.startMs), msToSample(s.endMs))));
+  const foreground = selectForeground(levels);
+  const usable = candidates.filter((_, i) => foreground[i]);
+  const backgroundMs = candidates
+    .filter((_, i) => !foreground[i])
+    .reduce((sum, s) => sum + (s.endMs - s.startMs), 0);
   const speechMs = singleSpeaker.reduce((sum, s) => sum + (s.endMs - s.startMs), 0);
   const longestSpanMs = singleSpeaker.reduce((m, s) => Math.max(m, s.endMs - s.startMs), 0);
   const discardedShortMs = speechMs - usable.reduce((sum, s) => sum + (s.endMs - s.startMs), 0);
@@ -201,7 +215,9 @@ export async function diarize(
       windows: plan.length,
       spansTotal: allSpans.length,
       spansSingleSpeaker: singleSpeaker.length,
-      spansLongEnough: usable.length,
+      spansLongEnough: candidates.length,
+      spansInForeground: usable.length,
+      backgroundMs,
       embeddings: vectors.length,
       speechMs,
       longestSpanMs,
