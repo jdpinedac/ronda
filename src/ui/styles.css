@@ -112,3 +112,23 @@ a.btn-go { display: block; }
   background: rgba(201, 147, 43, .14); color: #7A5A12;
   border-radius: 10px; font-size: 13px; line-height: 1.55;
 }
+
+/* --- live page --- */
+.stage { display: flex; flex-direction: column; align-items: center; margin-top: 24px; }
+.controls-center { display: flex; justify-content: center; margin-top: 22px; }
+.controls-center .btn-go { width: auto; min-width: 190px; border-radius: 999px; }
+.btn-go.stopping { background: var(--danger); }
+.live-badge {
+  margin-top: 18px; display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-radius: 999px; background: rgba(51,38,28,.06);
+  font-size: 13.5px; color: var(--muted);
+}
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.live-badge.on { color: var(--ink); }
+.live-badge.on .live-dot { animation: pulse 1.1s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.45; transform:scale(.72);} }
+@media (prefers-reduced-motion: reduce) { .live-badge.on .live-dot { animation: none; } }
+.meter { width: 180px; height: 4px; background: rgba(51,38,28,.1); border-radius: 2px; margin-top: 14px; overflow: hidden; }
+#meter-fill { height: 100%; width: 0%; background: var(--muted); transition: width .1s linear; }
+.center-elapsed { font-size: 11px; color: var(--muted); margin-top: 2px; opacity: .8; }
+.legend-row.active .name { font-weight: 600; }

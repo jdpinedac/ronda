@@ -19,6 +19,11 @@ const STRINGS = {
   silence: { es: 'Silencio', en: 'Silence' },
   spokenTime: { es: 'tiempo hablado', en: 'time spoken' },
   loadingModels: { es: 'Cargando modelos…', en: 'Loading models…' },
+  liveCta: { es: 'Escuchar la mesa', en: 'Listen to the table' },
+  liveCtaBody: {
+    es: 'Pon el celular o el portátil en el centro de la mesa y pulsa Escuchar. Vas viendo en vivo cuánto habla cada quien. No graba nada: el audio se analiza y se descarta al instante.',
+    en: 'Put your phone or laptop in the middle of the table and press Listen. You see who is holding the floor as it happens. Nothing is recorded: audio is analysed and discarded at once.',
+  },
   analyseCta: { es: 'Analizar una grabación', en: 'Analyse a recording' },
   analyseCtaBody: {
     es: 'Ya funciona: elige un archivo de audio de una conversación y Ronda te dice cuánto habló cada quien. Todo en tu navegador.',
@@ -26,14 +31,33 @@ const STRINGS = {
   },
   buildingTitle: { es: 'En construcción', en: 'Under construction' },
   buildingBody: {
-    es: 'Escuchar en vivo desde el micrófono todavía no está listo. Mientras tanto puedes usar la versión antigua, que sí escucha en directo, aunque se equivoca bastante más.',
-    en: 'Listening live from the microphone is not ready yet. In the meantime you can use the old version, which does listen live, though it makes considerably more mistakes.',
+    es: 'Falta la calibración de voces, que permitiría ponerle nombre a cada quien automáticamente. Aquí está el prototipo original, conservado como referencia.',
+    en: 'Voice calibration, which would name people automatically, is still to come. Here is the original prototype, kept for reference.',
   },
   tryPrototype: { es: 'Probar la versión antigua', en: 'Try the old version' },
   thisDevice: { es: 'Este dispositivo', en: 'This device' },
   deviceReady: {
     es: 'Tu navegador puede ejecutar Ronda.',
     en: 'Your browser can run Ronda.',
+  },
+  liveTitle: { es: 'Escuchar la mesa', en: 'Listen to the table' },
+  liveBody: {
+    es: 'Pon el aparato en el centro de la mesa y pulsa Escuchar. Distingue las voces por su timbre, nunca por lo que dicen, y no graba nada.',
+    en: 'Put the device in the middle of the table and press Listen. It tells voices apart by their timbre, never by what they say, and records nothing.',
+  },
+  micDenied: {
+    es: 'No pude acceder al micrófono. Revisa los permisos del navegador y vuelve a intentarlo.',
+    en: 'I could not reach the microphone. Check the browser permissions and try again.',
+  },
+  preparing: { es: 'Preparando…', en: 'Getting ready…' },
+  listening: { es: 'Escuchando', en: 'Listening' },
+  firstResultWait: {
+    es: 'El primer resultado aparece a los 10 segundos.',
+    en: 'The first result appears after 10 seconds.',
+  },
+  tellTheTable: {
+    es: 'Avísale a la mesa que está escuchando.',
+    en: 'Let the table know it is listening.',
   },
   analyseTitle: { es: 'Analizar una grabación', en: 'Analyse a recording' },
   analyseBody: {

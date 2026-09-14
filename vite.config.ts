@@ -13,6 +13,7 @@ export default defineConfig({
       input: {
         index: 'index.html',
         analyze: 'analyze.html',
+        live: 'live.html',
       },
     },
   },

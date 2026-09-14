@@ -9,6 +9,9 @@ const setText = (id: string, value: string) => {
 };
 
 setText('tagline', t('tagline'));
+setText('live-cta', t('liveCta'));
+setText('live-cta-body', t('liveCtaBody'));
+setText('live-link', t('listen'));
 setText('analyse-cta', t('analyseCta'));
 setText('analyse-cta-body', t('analyseCtaBody'));
 setText('analyse-link', t('analyse'));

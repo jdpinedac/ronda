@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#F2E8D6">
+  <title>Ronda — escuchar</title>
+  <script src="./coi-serviceworker.js"></script>
+  <link rel="stylesheet" href="/src/ui/styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>Ronda</h1>
+      <p class="sub" id="live-body"></p>
+    </header>
+
+    <section class="setup">
+      <label class="field">
+        <span id="names-label"></span>
+        <input type="text" id="names" placeholder="Ana, Juan, Marta…" autocomplete="off">
+        <small id="names-hint"></small>
+      </label>
+    </section>
+
+    <section class="stage">
+      <div class="dial-wrap">
+        <svg class="dial" viewBox="0 0 240 240" aria-hidden="true">
+          <circle class="dial-track" cx="120" cy="120" r="100"></circle>
+          <g id="segments" transform="rotate(-90 120 120)"></g>
+        </svg>
+        <div class="dial-center">
+          <div id="center-time" class="center-time">0:00</div>
+          <div class="center-label" id="center-label"></div>
+          <div id="center-elapsed" class="center-elapsed"></div>
+        </div>
+      </div>
+      <div id="badge" class="live-badge">
+        <span class="live-dot"></span><span id="badge-text"></span>
+      </div>
+      <div class="meter" aria-hidden="true"><div id="meter-fill"></div></div>
+    </section>
+
+    <div class="controls-center">
+      <button class="btn btn-go" id="toggle" disabled></button>
+    </div>
+
+    <p id="hint" class="meta"></p>
+    <p id="warning" class="warning" hidden></p>
+    <p id="error" class="error" hidden></p>
+
+    <ul id="legend" class="legend"></ul>
+
+    <details id="diagnostics-wrap" class="diag" hidden>
+      <summary>Technical details</summary>
+      <div id="diagnostics"></div>
+    </details>
+
+    <footer><a href="./">← Ronda</a></footer>
+  </main>
+  <script type="module" src="/src/live.ts"></script>
+</body>
+</html>
