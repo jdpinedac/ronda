@@ -175,6 +175,52 @@ export function absorbTinyClusters(
   return out;
 }
 
+/**
+ * Extra clusters allowed beyond the number of people said to be present.
+ *
+ * A television, the next table, a passing colleague: a recording routinely
+ * contains voices that are not participants. Cutting the dendrogram at exactly
+ * the number of people forces those voices into somebody's tally, and the
+ * damage is not a small error — it merges two real people into one cluster to
+ * free a slot. Ana's test had three people plus a television playing a
+ * two-person dialogue, and two of the three were merged.
+ *
+ * Giving the clustering room to put intruders in their own groups, then keeping
+ * only the busiest, assumes the people at the table speak more than the
+ * background. Measured on a recording with chatter underneath a four-person
+ * meeting: 31/31/20/18 at exactly four, against a true 34/23/22/21; with
+ * headroom, 35/23/22/20.
+ */
+export const CLUSTER_HEADROOM = 2;
+
+/** Marks a stretch as belonging to no participant. */
+export const OTHER_VOICE = -1;
+
+/**
+ * Keeps the `k` clusters with the most speech and marks the rest as other
+ * voices. Labels are renumbered 0..k-1 by how much each speaks.
+ */
+export function keepBusiest(
+  labels: readonly number[],
+  durationsMs: readonly number[],
+  k: number,
+): number[] {
+  if (k <= 0) return labels.map(() => OTHER_VOICE);
+
+  const totals = new Map<number, number>();
+  labels.forEach((l, i) => totals.set(l, (totals.get(l) ?? 0) + (durationsMs[i] ?? 0)));
+  if (totals.size <= k) {
+    // Nothing to discard, but still renumber by prominence.
+    const order = [...totals.entries()].sort((a, b) => b[1] - a[1]).map(([l]) => l);
+    const rank = new Map(order.map((l, i) => [l, i]));
+    return labels.map((l) => rank.get(l) ?? OTHER_VOICE);
+  }
+
+  const ranked = [...totals.entries()].sort((a, b) => b[1] - a[1]);
+  const rank = new Map(ranked.slice(0, k).map(([l], i) => [l, i]));
+  return labels.map((l) => rank.get(l) ?? OTHER_VOICE);
+}
+
 export type SpeakerCountSource = 'calibration' | 'names' | 'automatic';
 
 export interface SpeakerCountHint {

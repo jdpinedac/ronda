@@ -132,6 +132,7 @@ function render(state: LiveState) {
       <dt>speakers</dt><dd>${state.speakers.length}</dd>
       <dt>speech heard</dt><dd>${(state.spokenMs / 1000).toFixed(1)} s</dd>
       <dt>too far away, dropped</dt><dd>${(state.backgroundMs / 1000).toFixed(1)} s</dd>
+      <dt>not a participant</dt><dd>${(state.otherVoicesMs / 1000).toFixed(1)} s</dd>
       <dt>listening for</dt><dd>${(state.elapsedMs / 1000).toFixed(0)} s</dd>
       <dt>speaker count from</dt><dd>${state.countHint.source}</dd>
       <dt>reliability</dt><dd>${state.reliability}</dd>

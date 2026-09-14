@@ -8,7 +8,8 @@
 import { computeFbank, WESPEAKER_FBANK } from './fbank.js';
 import {
   agglomerative, absorbTinyClusters, normalise, resolveSpeakerCount,
-  centreEmbeddings, DEFAULT_THRESHOLD, type SpeakerCountHint,
+  centreEmbeddings, keepBusiest, CLUSTER_HEADROOM, OTHER_VOICE,
+  DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
 import { decodeSegmentation, speechSpans, type Span } from './segmentation.js';
@@ -39,6 +40,8 @@ export interface Diagnostics {
   spansLongEnough: number;
   spansInForeground: number;
   backgroundMs: number;
+  /** Speech grouped into voices that are not participants. */
+  otherVoicesMs: number;
   embeddings: number;
   speechMs: number;
   longestSpanMs: number;
@@ -90,6 +93,9 @@ export interface DiarizeOptions {
 }
 
 const msToSample = (ms: number) => Math.round((ms / 1000) * SAMPLE_RATE);
+
+const durationsOf = (spans: readonly Span[], count: number): number[] =>
+  spans.slice(0, count).map((s) => s.endMs - s.startMs);
 
 export async function diarize(
   audio: Float32Array,
@@ -169,19 +175,33 @@ export async function diarize(
   // calibrated threshold is worth more than the outlier resistance.
   let labels: number[] = [];
   if (vectors.length > 0) {
-    labels = countHint.k !== null
-      ? agglomerative(centreEmbeddings(vectors), { k: countHint.k })
-      : agglomerative(vectors, { threshold: DEFAULT_THRESHOLD });
+    if (countHint.k !== null) {
+      // Cluster with headroom, then keep only the busiest groups. A television
+      // or the next table would otherwise be forced into somebody's tally, and
+      // the cost is not a small error: it merges two real people to free a
+      // slot. See CLUSTER_HEADROOM.
+      const wide = agglomerative(centreEmbeddings(vectors), {
+        k: countHint.k + CLUSTER_HEADROOM,
+      });
+      labels = keepBusiest(wide, durationsOf(usable, vectors.length), countHint.k);
+    } else {
+      labels = agglomerative(vectors, { threshold: DEFAULT_THRESHOLD });
+    }
   }
 
-  const durations = usable.slice(0, vectors.length).map((s) => s.endMs - s.startMs);
+  const durations = durationsOf(usable, vectors.length);
   if (!countHint.confident && vectors.length > 0) {
     labels = absorbTinyClusters(vectors, labels, durations, { minSegments: 2, minDurationMs: 2000 });
   }
 
   // --- tally ---
   const byId = new Map<number, { totalMs: number; segments: number }>();
+  let otherVoicesMs = 0;
   labels.forEach((l, i) => {
+    if (l === OTHER_VOICE) {
+      otherVoicesMs += durations[i] ?? 0;
+      return;
+    }
     const cur = byId.get(l) ?? { totalMs: 0, segments: 0 };
     cur.totalMs += durations[i] ?? 0;
     cur.segments += 1;
@@ -203,9 +223,9 @@ export async function diarize(
   opts.onProgress?.(1, 'done');
   return {
     speakers,
-    spans: usable.slice(0, vectors.length).map((s, i) => ({
-      startMs: s.startMs, endMs: s.endMs, speaker: labels[i] ?? 0,
-    })),
+    spans: usable.slice(0, vectors.length)
+      .map((s, i) => ({ startMs: s.startMs, endMs: s.endMs, speaker: labels[i] ?? 0 }))
+      .filter((s) => s.speaker !== OTHER_VOICE),
     overlapMs,
     silenceMs,
     totalMs,
@@ -218,6 +238,7 @@ export async function diarize(
       spansLongEnough: candidates.length,
       spansInForeground: usable.length,
       backgroundMs,
+      otherVoicesMs,
       embeddings: vectors.length,
       speechMs,
       longestSpanMs,

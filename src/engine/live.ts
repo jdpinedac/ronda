@@ -14,7 +14,7 @@
 import { computeFbank, WESPEAKER_FBANK } from './fbank.js';
 import {
   agglomerative, absorbTinyClusters, centreEmbeddings, normalise, resolveSpeakerCount,
-  DEFAULT_THRESHOLD, type SpeakerCountHint,
+  keepBusiest, CLUSTER_HEADROOM, OTHER_VOICE, DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
 import { rms, selectForeground } from './levels.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
@@ -45,6 +45,8 @@ export interface LiveState {
   samples: number;
   /** Speech judged to come from outside the conversation. */
   backgroundMs: number;
+  /** Speech grouped into voices that are not participants. */
+  otherVoicesMs: number;
 }
 
 export interface LiveSession {
@@ -135,7 +137,13 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     // Re-cluster everything heard so far, so earlier mistakes get corrected.
     if (vectors.length > 0) {
       labels = countHint.k !== null
-        ? agglomerative(centreEmbeddings(vectors), { k: countHint.k })
+        ? keepBusiest(
+          // Headroom so a television or the next table gets its own group
+          // instead of being forced into somebody's tally. See CLUSTER_HEADROOM.
+          agglomerative(centreEmbeddings(vectors), { k: countHint.k + CLUSTER_HEADROOM }),
+          durations,
+          countHint.k,
+        )
         : absorbTinyClusters(
           vectors,
           agglomerative(vectors, { threshold: DEFAULT_THRESHOLD }),
@@ -148,7 +156,12 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
 
   function state(): LiveState {
     const byId = new Map<number, { totalMs: number; segments: number }>();
+    let otherVoicesMs = 0;
     labels.forEach((l, i) => {
+      if (l === OTHER_VOICE) {
+        otherVoicesMs += durations[i] ?? 0;
+        return;
+      }
       const cur = byId.get(l) ?? { totalMs: 0, segments: 0 };
       cur.totalMs += durations[i] ?? 0;
       cur.segments += 1;
@@ -173,6 +186,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       countHint,
       samples: vectors.length,
       backgroundMs,
+      otherVoicesMs,
     };
   }
 
