@@ -1,0 +1,153 @@
+{
+ "source": "AMI Corpus meeting ES2004a, single distant microphone (CC-BY-4.0)",
+ "durationMs": 90000,
+ "speakers": [
+  "FEE013",
+  "FEE016",
+  "MEE014",
+  "MEO015"
+ ],
+ "turns": [
+  {
+   "startMs": 0,
+   "endMs": 14480,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 4990,
+   "endMs": 5280,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 7080,
+   "endMs": 7740,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 12170,
+   "endMs": 12620,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 12890,
+   "endMs": 13440,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 14460,
+   "endMs": 32030,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 23800,
+   "endMs": 25920,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 31150,
+   "endMs": 31490,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 32350,
+   "endMs": 35090,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 36150,
+   "endMs": 43630,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 36270,
+   "endMs": 38960,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 39960,
+   "endMs": 40260,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 41350,
+   "endMs": 47970,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 46060,
+   "endMs": 46350,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 48120,
+   "endMs": 51440,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 49370,
+   "endMs": 54050,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 50050,
+   "endMs": 50600,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 53260,
+   "endMs": 53800,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 54640,
+   "endMs": 64640,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 58640,
+   "endMs": 59000,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 61200,
+   "endMs": 63240,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 63730,
+   "endMs": 69580,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 70980,
+   "endMs": 81940,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 82330,
+   "endMs": 82760,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 83210,
+   "endMs": 83530,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 84300,
+   "endMs": 90000,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 84430,
+   "endMs": 85770,
+   "speaker": "MEE014"
+  }
+ ],
+ "shares": {
+  "FEE016": 34,
+  "MEO015": 22,
+  "MEE014": 23,
+  "FEE013": 21
+ }
+}

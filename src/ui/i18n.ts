@@ -40,6 +40,16 @@ const STRINGS = {
     es: 'Elige un archivo de audio de una conversación. Se analiza aquí mismo, en tu navegador: no se sube a ningún servidor.',
     en: 'Choose an audio file of a conversation. It is analysed right here in your browser and never uploaded.',
   },
+  tryExample: { es: 'Probar con un ejemplo', en: 'Try an example' },
+  exampleLoading: { es: 'Cargando el ejemplo…', en: 'Loading the example…' },
+  exampleNote: {
+    es: 'Ejemplo: 90 segundos de una reunión real de cuatro personas, grabada con un solo micrófono en medio de la mesa — el caso más difícil. El reparto verdadero es 34% / 23% / 22% / 21%.',
+    en: 'Example: 90 seconds of a real four-person meeting recorded on a single microphone in the middle of the table — the hardest case. The true split is 34% / 23% / 22% / 21%.',
+  },
+  exampleCredit: {
+    es: 'Audio del AMI Corpus (CC-BY-4.0).',
+    en: 'Audio from the AMI Corpus (CC-BY-4.0).',
+  },
   chooseFile: { es: 'Elegir archivo', en: 'Choose file' },
   analyse: { es: 'Analizar', en: 'Analyse' },
   namesHint: {

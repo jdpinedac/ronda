@@ -119,6 +119,12 @@ Architecture decisions live in [`docs/adr/`](docs/adr/), the design spec in
 [`docs/superpowers/specs/`](docs/superpowers/specs/), and the throwaway feasibility
 probe in [`spike/`](spike/).
 
+## Credits
+
+The bundled example recording in `public/example/` is 90 seconds of meeting ES2004a
+from the [AMI Corpus](https://groups.inf.ed.ac.uk/ami/corpus/), recorded on a single
+distant microphone, used under CC-BY-4.0.
+
 ## Authors
 
 Ana Lopez and Juan Pineda.

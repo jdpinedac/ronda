@@ -10,6 +10,7 @@ setText('analyse-body', t('analyseBody'));
 setText('names-label', t('namesLabel'));
 setText('names-hint', t('namesHint'));
 setText('choose', t('chooseFile'));
+setText('example', t('tryExample'));
 setText('go', t('analyse'));
 setText('results-title', t('results'));
 setText('center-label', t('spokenTime'));
@@ -20,6 +21,7 @@ const fileInput = $('file') as HTMLInputElement | null;
 const namesInput = $('names') as HTMLInputElement | null;
 const goButton = $('go') as HTMLButtonElement | null;
 const chooseButton = $('choose') as HTMLButtonElement | null;
+const exampleButton = $('example') as HTMLButtonElement | null;
 
 let chosen: File | null = null;
 
@@ -28,6 +30,39 @@ let chosen: File | null = null;
 // control that does nothing is worse than waiting for it.
 chooseButton?.addEventListener('click', () => fileInput?.click());
 if (chooseButton) chooseButton.disabled = false;
+
+// A bundled recording, so trying Ronda does not require going and finding an
+// audio file first. Its true answer is stated on the page, which makes the
+// result checkable rather than merely plausible.
+exampleButton?.addEventListener('click', async () => {
+  if (!exampleButton) return;
+  exampleButton.disabled = true;
+  showProgress(t('exampleLoading'));
+  try {
+    const url = `${import.meta.env.BASE_URL}example/meeting.wav`;
+    const blob = await (await fetch(url)).blob();
+    chosen = new File([blob], 'meeting.wav', { type: 'audio/wav' });
+    setText('filename', 'meeting.wav');
+    if (namesInput && !namesInput.value.trim()) {
+      namesInput.value = t('listen') === 'Listen'
+        ? 'Person A, Person B, Person C, Person D'
+        : 'Persona A, Persona B, Persona C, Persona D';
+    }
+    const note = $('example-note');
+    if (note) {
+      note.textContent = `${t('exampleNote')} ${t('exampleCredit')}`;
+      note.hidden = false;
+    }
+    if (goButton) goButton.disabled = false;
+    const p = $('progress');
+    if (p) p.hidden = true;
+  } catch {
+    showError(t('analyseFailed'));
+  } finally {
+    exampleButton.disabled = false;
+  }
+});
+if (exampleButton) exampleButton.disabled = false;
 fileInput?.addEventListener('change', () => {
   chosen = fileInput.files?.[0] ?? null;
   setText('filename', chosen?.name ?? '');
