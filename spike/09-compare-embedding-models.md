@@ -31,8 +31,14 @@ same setting WeSpeaker ResNet34 uses — it beats it. Always measure both ways.
 | CAM++, no mean normalisation | 512 | 0.512 | 52.6 s | 169 |
 | **CAM++, mean normalisation** | 512 | **0.380** | **20.3 s** | **169** |
 
-Not yet confirmed on the four-speaker AMI benchmark — that run was interrupted and is
-the first thing to redo before acting on any of this.
+**Confirmed on three whole four-speaker meetings on 2026-09-15, and it does not hold
+up.** Scored with the oracle floor from ADR 0005 (every segment assigned to its
+annotated speaker's centroid), CAM++ with mean normalisation gives 0.317, 0.296 and
+0.381 against WeSpeaker int8's 0.306, 0.292 and 0.385 — the same floor. The two-women
+gain is real (baseline 0.346 against 0.402) but disappears once splinters are placed
+back (0.356 against 0.330). Not worth 29 MB. Reproduce with
+`EMB=span EMB_MODEL=campplus npm run bench -- bench/embedding.report.ts` followed by
+`REC=campplus npm run bench -- bench/score.report.ts`.
 
 Size is the open question: CAM++ ships as 29 MB fp32 against the 6.7 MB int8 build
 Ronda serves today. A quantised CAM++ would need producing and re-measuring, since

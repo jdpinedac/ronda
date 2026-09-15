@@ -13,6 +13,19 @@ export const SEGMENTATION_CLASSES = 7;
 export const EMBEDDING_DIM = 256;
 export const SAMPLE_RATE = 16000;
 
+/**
+ * Alternative embedding models for the benchmark, chosen with EMB_MODEL.
+ * All take the same 80-bin mean-normalised fbank; they differ in weights,
+ * precision and tensor names. Files other than the int8 default are not
+ * committed; see spike/09-compare-embedding-models.md for where they come from.
+ */
+export const EMBEDDING_MODELS: Record<string, { path: string; input: string; output: string }> = {
+  int8: { path: `${ROOT}/public/models/embedding-int8.onnx`, input: 'input_features', output: 'last_hidden_state' },
+  fp32: { path: `${ROOT}/public/testdata/wespeaker-fp32.onnx`, input: 'input_features', output: 'last_hidden_state' },
+  campplus: { path: `${ROOT}/public/testdata/campplus.onnx`, input: 'feats', output: 'embs' },
+};
+export const embeddingModel = process.env.EMB_MODEL ?? 'int8';
+
 export const captured: Float32Array[] = [];
 export const resetCaptured = () => { captured.length = 0; };
 
@@ -23,7 +36,7 @@ export function loadModels() {
     const opts: ort.InferenceSession.SessionOptions = { executionProviders: ['wasm'], graphOptimizationLevel: 'all' };
     const dir = `${ROOT}/public/models`;
     const segmentation = await ort.InferenceSession.create(new Uint8Array(readFileSync(`${dir}/segmentation-int8.onnx`)), opts);
-    const embedding = await ort.InferenceSession.create(new Uint8Array(readFileSync(`${dir}/embedding-int8.onnx`)), opts);
+    const embedding = await ort.InferenceSession.create(new Uint8Array(readFileSync(EMBEDDING_MODELS[embeddingModel]!.path)), opts);
     return { segmentation, embedding };
   })();
   return loading;
@@ -33,8 +46,9 @@ export async function runSegmentation(session: ort.InferenceSession, window: Flo
   return out['logits']!.data as Float32Array;
 }
 export async function runEmbedding(session: ort.InferenceSession, features: Float32Array, numFrames: number, numBins: number): Promise<Float32Array> {
-  const out = await session.run({ input_features: new ort.Tensor('float32', features, [1, numFrames, numBins]) });
-  const v = out['last_hidden_state']!.data as Float32Array;
+  const io = EMBEDDING_MODELS[embeddingModel]!;
+  const out = await session.run({ [io.input]: new ort.Tensor('float32', features, [1, numFrames, numBins]) });
+  const v = out[io.output]!.data as Float32Array;
   let n = 0; for (let i = 0; i < v.length; i++) n += v[i]! * v[i]!;
   n = Math.sqrt(n);
   captured.push(Float32Array.from(v, (x) => x / n));

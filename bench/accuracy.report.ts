@@ -13,6 +13,7 @@
  *     npm run bench                      # everything present
  *     REC=meeting npm run bench          # substring filter on the name
  *     BENCH_DUMP=1 npm run bench         # also write embeddings to bench/out/
+ *     BENCH_DUMP=only npm run bench      # write embeddings and stop; a quarter of the time
  */
 import { describe, it, vi } from 'vitest';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
@@ -28,6 +29,8 @@ const RECORDINGS: { name: string; path: string; people: number; truth?: string }
   { name: 'ami-meeting (AMI, 3 min)', path: `${TD}/ami-meeting.wav`, people: 4, truth: `${TD}/ami-meeting.truth.json` },
   { name: 'two-women (AMI, 4 min)', path: `${TD}/two-women.wav`, people: 2, truth: `${TD}/two-women.truth.json` },
   { name: 'ami-ES2004a (AMI, full 17.5 min)', path: `${TD}/ami-ES2004a.wav`, people: 4, truth: `${TD}/ami-ES2004a.truth.json` },
+  { name: 'ami-IS1009a (AMI, full 13.4 min)', path: `${TD}/ami-IS1009a.wav`, people: 4, truth: `${TD}/ami-IS1009a.truth.json` },
+  { name: 'ami-TS3003a (AMI, full 24.6 min)', path: `${TD}/ami-TS3003a.wav`, people: 4, truth: `${TD}/ami-TS3003a.truth.json` },
   { name: 'four-speakers-zh (clean, 57 s)', path: `${TD}/0-four-speakers-zh.wav`, people: 4 },
   { name: 'with-distant-voices (90 s)', path: `${TD}/with-distant-voices.wav`, people: 4 },
   { name: 'distant-in-gaps (90 s)', path: `${TD}/distant-in-gaps.wav`, people: 4 },
@@ -91,6 +94,8 @@ describe('accuracy', () => {
           vectors: captured.map((v) => Array.from(v, (x) => Math.round(x * 1e4) / 1e4)),
         }));
       }
+
+      if (process.env.BENCH_DUMP === 'only') { console.log(out.join('\n')); return; }
 
       const counted = await diarize(audio, { speakerCount: rec.people });
       out.push(`[file, count=${rec.people}]    speakers=${String(counted.speakers.length).padStart(2)}  shares=${pct(counted.speakers.map((s) => s.share))}${der(counted.spans)}  reliability=${counted.reliability}  dropped-as-distant=${sec(counted.diagnostics.backgroundMs)}s`);
