@@ -7,6 +7,8 @@ const $ = (id: string) => document.getElementById(id);
 const setText = (id: string, v: string) => { const el = $(id); if (el) el.textContent = v; };
 
 setText('analyse-body', t('analyseBody'));
+setText('count-label', t('countLabel'));
+setText('count-hint', t('countHint'));
 setText('names-label', t('namesLabel'));
 setText('names-hint', t('namesHint'));
 setText('bg-voices-label', t('backgroundVoicesLabel'));
@@ -25,7 +27,24 @@ const goButton = $('go') as HTMLButtonElement | null;
 const chooseButton = $('choose') as HTMLButtonElement | null;
 const exampleButton = $('example') as HTMLButtonElement | null;
 
+const countInput = $('count') as HTMLInputElement | null;
+
 let chosen: File | null = null;
+
+/** See the note in live.ts: the head count is the one input Ronda insists on. */
+function headCount(): number | null {
+  const n = Number(countInput?.value);
+  return Number.isInteger(n) && n >= 2 ? n : null;
+}
+const typedNames = () => (namesInput?.value ?? '').split(',').map((n) => n.trim()).filter(Boolean);
+function refreshReady() {
+  if (goButton) goButton.disabled = !chosen || headCount() === null;
+}
+countInput?.addEventListener('input', refreshReady);
+namesInput?.addEventListener('input', () => {
+  if (countInput && !countInput.value && typedNames().length >= 2) countInput.value = String(typedNames().length);
+  refreshReady();
+});
 
 // The controls start disabled in the markup and are enabled here, so a button
 // is never clickable before its listener exists. Clicking a live-looking
@@ -45,17 +64,14 @@ exampleButton?.addEventListener('click', async () => {
     const blob = await (await fetch(url)).blob();
     chosen = new File([blob], 'meeting.wav', { type: 'audio/wav' });
     setText('filename', 'meeting.wav');
-    if (namesInput && !namesInput.value.trim()) {
-      namesInput.value = t('listen') === 'Listen'
-        ? 'Person A, Person B, Person C, Person D'
-        : 'Persona A, Persona B, Persona C, Persona D';
-    }
+    // The example is a four-person meeting; say so, as a user would.
+    if (countInput && !countInput.value) countInput.value = '4';
     const note = $('example-note');
     if (note) {
       note.textContent = `${t('exampleNote')} ${t('exampleCredit')}`;
       note.hidden = false;
     }
-    if (goButton) goButton.disabled = false;
+    refreshReady();
     const p = $('progress');
     if (p) p.hidden = true;
   } catch {
@@ -68,7 +84,7 @@ if (exampleButton) exampleButton.disabled = false;
 fileInput?.addEventListener('change', () => {
   chosen = fileInput.files?.[0] ?? null;
   setText('filename', chosen?.name ?? '');
-  if (goButton) goButton.disabled = !chosen;
+  refreshReady();
 });
 
 function formatTime(ms: number): string {
@@ -130,7 +146,7 @@ function render(result: DiarizationResult) {
 
   setText('center-time', formatTime(spokenMs));
 
-  const typed = (namesInput?.value ?? '').split(',').map((n) => n.trim()).filter(Boolean);
+  const typed = typedNames();
   legend.innerHTML = '';
   result.speakers.forEach((sp, i) => {
     const li = document.createElement('li');
@@ -146,8 +162,9 @@ function render(result: DiarizationResult) {
 
   setText('meta',
     `${formatTime(result.overlapMs)} ${t('overlap')} · ${formatTime(result.silenceMs)} ${t('inSilence')}`);
+  const source = result.countHint.source;
   setText('count-note',
-    result.countHint.confident ? t('countFromNames') : t('countAutomatic'));
+    source === 'count' ? t('countFromCount') : source === 'names' ? t('countFromNames') : t('countAutomatic'));
 
   const el = $('results');
   if (el) el.hidden = false;
@@ -194,11 +211,11 @@ goButton?.addEventListener('click', async () => {
     await loadModels();
 
     const audio = await decodeTo16kMono(chosen);
-    const names = (namesInput?.value ?? '').split(',').map((n) => n.trim()).filter(Boolean);
-
+    const count = headCount();
     const bgVoices = ($('bg-voices') as HTMLInputElement | null)?.checked ?? false;
     const result = await diarize(audio, {
-      names,
+      names: typedNames(),
+      ...(count !== null ? { speakerCount: count } : {}),
       backgroundVoices: bgVoices,
       onProgress: (fraction, stage) => {
         const label = stage === 'segmenting' ? t('segmenting') : t('identifying');
@@ -218,11 +235,7 @@ goButton?.addEventListener('click', async () => {
       renderWarning(t('insufficient'));
       render(result);
     } else {
-      // Without a speaker count, background chatter inflates the tally. Point
-      // at the fix that works rather than leaving the user to wonder.
-      if (!result.countHint.confident && result.speakers.length > 4) {
-        renderWarning(t('tooManySpeakers'));
-      } else if (result.reliability === 'low') {
+      if (result.reliability === 'low') {
         renderWarning(t('lowConfidence'));
       }
       render(result);
@@ -232,6 +245,6 @@ goButton?.addEventListener('click', async () => {
     if (progressEl) progressEl.hidden = true;
     showError(`${t('analyseFailed')} ${err instanceof Error ? err.message : ''}`);
   } finally {
-    goButton.disabled = false;
+    refreshReady();
   }
 });
