@@ -9,7 +9,7 @@
  */
 import { describe, it } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { agglomerative, centreEmbeddings, keepBusiest, cosineDistance, normalise, OTHER_VOICE } from '../src/engine/clustering.js';
+import { agglomerative, centreEmbeddings, keepBusiest, cosineDistance, normalise, OTHER_VOICE, placeSplinters, splinterHeadroom } from '../src/engine/clustering.js';
 import { diarizationErrorRate, type Turn } from '../src/metrics/der.js';
 import { ROOT } from './node-models.js';
 
@@ -54,6 +54,28 @@ function keepAndPlace(V: readonly Vec[], w: readonly number[], k: number, extra:
   const cents = [...members(kept).entries()].map(([l, idxs]) => ({ l, c: centroid(V, w, idxs) }));
   return kept.map((l, i) => (l !== OTHER_VOICE ? l : nearest(V[i]!, cents)));
 }
+/** The policy diarize() ships: cut wide, keep k busiest, place the rest. */
+function shipped(V: readonly Vec[], w: readonly number[], k: number): number[] {
+  const wide = agglomerative(V, { k: k + splinterHeadroom(V.length) });
+  return placeSplinters(V, keepBusiest(wide, w, k), w);
+}
+/** After the shipped policy, leave out segments shorter than minS: they are not attributed at all. */
+function shippedDropShort(V: readonly Vec[], w: readonly number[], k: number, minS: number): number[] {
+  return shipped(V, w, k).map((l, i) => (w[i]! < minS ? OTHER_VOICE : l));
+}
+/** After the shipped policy, leave out segments whose nearest centroid does not win by `margin`. */
+function shippedDropAmbiguous(V: readonly Vec[], w: readonly number[], k: number, margin: number): number[] {
+  const labels = shipped(V, w, k);
+  const cents = [...members(labels).entries()].map(([l, idxs]) => ({ l, c: centroid(V, w, idxs) }));
+  return labels.map((l, i) => {
+    const ds = cents.map(({ c }) => cosineDistance(V[i]!, c)).sort((a, b) => a - b);
+    return ds.length > 1 && ds[1]! - ds[0]! < margin ? OTHER_VOICE : l;
+  });
+}
+/** Does the span start or end on a window trust boundary (2.5 s + 5 s multiples)? */
+const onBoundary = (s: { startMs: number; endMs: number }) =>
+  [s.startMs, s.endMs].some((t) => Math.abs(((t - 2500) % 5000 + 5000) % 5000) < 60 || Math.abs(((t - 2500) % 5000 + 5000) % 5000 - 5000) < 60);
+
 function score(d: Dump, truth: { turns: Turn[] }, labels: readonly number[]): string {
   const durs = d.spans.map((s) => s.endMs - s.startMs);
   const hyp: Turn[] = d.spans.map((s, i) => ({ startMs: s.startMs, endMs: s.endMs, speaker: labels[i]! })).filter((t) => t.speaker !== OTHER_VOICE);
@@ -68,7 +90,7 @@ function score(d: Dump, truth: { turns: Turn[] }, labels: readonly number[]): st
     const s = [...by.values()].sort((a, b) => b - a);
     if (s.length > 1 && s[1]! > 0.3 * (s[0]! + s[1]!)) merged++;
   }
-  return `DER=${der.der.toFixed(3)} conf=${(der.confusionMs / 1000).toFixed(0).padStart(3)}s merged=${merged}  ${[...tot.values()].sort((a, b) => b - a).map((v) => Math.round((100 * v) / sum)).join('/')}`;
+  return `DER=${der.der.toFixed(3)} conf=${(der.confusionMs / 1000).toFixed(0).padStart(3)}s miss=${(der.missedMs / 1000).toFixed(0).padStart(3)}s merged=${merged}  ${[...tot.values()].sort((a, b) => b - a).map((v) => Math.round((100 * v) / sum)).join('/')}`;
 }
 
 describe('prefixes of ES2004a (int8): baseline | k+8 | adaptive', () => {
@@ -103,8 +125,19 @@ describe('score', () => {
       const spk = [...new Set(d.truthLabels!.filter((t) => t !== '?' && t !== 'mixed'))].sort();
       const cents = spk.map((s, l) => ({ l, c: centroid(V, w, d.truthLabels!.map((t, i) => (t === s ? i : -1)).filter((i) => i >= 0)) }));
       const closer = d.truthLabels!.filter((t, i) => t !== '?' && t !== 'mixed' && spk[nearest(V[i]!, cents)] !== t).length;
+      if (d.truthLabels) {
+        const lab = d.truthLabels;
+        const mis = (i: number) => lab[i] !== '?' && lab[i] !== 'mixed' && spk[nearest(V[i]!, cents)] !== lab[i];
+        const idx = d.spans.map((_, i) => i).filter((i) => lab[i] !== '?' && lab[i] !== 'mixed');
+        const b = idx.filter((i) => onBoundary(d.spans[i]!)); const nb = idx.filter((i) => !onBoundary(d.spans[i]!));
+        console.log(`  ${d.name}: spans touching a window boundary ${b.length}/${idx.length}; misplaced ${b.filter(mis).length}/${b.length} on-boundary vs ${nb.filter(mis).length}/${nb.length} off`);
+      }
       const rows: [string, number[]][] = [
         ['baseline (cut at k)', keepBusiest(agglomerative(V, { k }), w, k)],
+        ['shipped (splinters placed)', shipped(V, w, k)],
+        ['shipped, drop < 1.5 s', shippedDropShort(V, w, k, 1.5)],
+        ['shipped, drop ambiguous 0.1', shippedDropAmbiguous(V, w, k, 0.1)],
+        ['shipped, drop ambiguous 0.2', shippedDropAmbiguous(V, w, k, 0.2)],
         ['core>=2s, place rest', coreThenAssign(V, w, k, 2)],
         ['k+8 keep k, place rest', keepAndPlace(V, w, k, 8)],
         [`k+${adaptiveExtra(V.length)} (adaptive) keep k, place`, keepAndPlace(V, w, k, adaptiveExtra(V.length))],
