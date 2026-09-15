@@ -68,34 +68,32 @@ case Ronda is built for — scored against human annotation of who spoke when:
 
 | | |
 |---|---|
-| **Diarization error rate** | **0.199** |
+| **Diarization error rate** | **0.111** |
 | Speakers found | 4 of 4 |
-| Time share | 35/31/21/13 against a true 32/32/19/16 |
-| Speech attributed to the wrong person | 3.2 s of 170 s (1.9%) |
-| Speech not attributed at all | 27.7 s |
+| Time share | 33/31/21/15 against a true 32/32/19/16 |
 
-Most of the error is not confusion but omission, and most of that omission is
-deliberate: 20.6 s of it is people talking over each other, which Ronda detects but
-does not attribute, because an embedding taken from two mixed voices belongs to
-neither. Another 5.9 s is stretches too short to identify reliably.
-
-So on that excerpt the time each person is credited with is close to right, and what
-Ronda misses, it mostly misses on purpose.
+People talking over each other are credited to whoever held the floor when the second
+voice came in — an embedding of two mixed voices belongs to neither, but time says who
+was already speaking, and measured against annotation that rule halves the error
+([ADR 0006](docs/adr/0006-credit-overlap-to-the-floor-holder.md)). What remains is
+mostly stretches too short to identify and speech the segmentation model does not
+hear.
 
 Whole meetings are harder. Measured over three complete AMI meetings, four people
 each, with the head count given:
 
 | Meeting | Length | Diarization error rate | Time share against the truth |
 |---|---|---|---|
-| ES2004a | 17.5 min | **0.306** | 47/24/17/11 against 42/29/18/11 |
-| IS1009a | 13.4 min | 0.367 | 57/21/16/6 against 62/20/9/9 |
-| TS3003a | 24.6 min | 0.487 | 59/14/14/13 against 70/13/11/5 |
+| ES2004a | 17.5 min | **0.244** | 45/25/18/12 against 42/29/18/11 |
+| IS1009a | 13.4 min | 0.280 | 57/20/17/6 against 62/20/9/9 |
+| TS3003a | 24.6 min | 0.479 | 59/14/14/14 against 70/13/11/5 |
 
-Roughly a third of the speech is attributed wrongly or not at all over a long meeting,
-against a fifth over three minutes. Until [ADR 0005](docs/adr/0005-place-splinters-back-when-the-head-count-is-known.md)
+A quarter to a half of the speech is attributed wrongly or not at all over a long
+meeting, against a tenth over three minutes. Until [ADR 0005](docs/adr/0005-place-splinters-back-when-the-head-count-is-known.md)
 it was worse: cutting at exactly the head count merged two real people on every one of
 these meetings. Nobody is merged now, but the three-minute figure above is the best
-case, not the typical one. All numbers come from `npm run bench`, which runs the real
+case, not the typical one. Where the remaining error comes from, and what was tried
+against it, is in ADRs 0005 and 0006. All numbers come from `npm run bench`, which runs the real
 pipeline against these recordings; `npm run bench:offline` repeats the clustering on
 stored embeddings in seconds. Fetch the recordings with `spike/08-fetch-ami.py` and
 `spike/10-fetch-ami-meeting.py`.
@@ -119,11 +117,13 @@ stored embeddings in seconds. Fetch the recordings with `spike/08-fetch-ami.py` 
   as a non-participant.
 - A single microphone at a large table is the hardest case. Expect approximation, not
   accounting.
-- Accuracy falls with length. Over three minutes of a four-person meeting a fifth of the
-  speech is misattributed or missed; over a whole meeting it is a third. Trust short
-  sessions more than long ones.
+- Accuracy falls with length. Over three minutes of a four-person meeting a tenth of the
+  speech is misattributed or missed; over a whole meeting it is a quarter or more. Trust
+  short sessions more than long ones.
+- When people talk over each other, the time goes to whoever already had the floor.
+  Someone who mostly speaks over others is under-credited.
 - When several people talk over each other for a long stretch, Ronda knows it is
-  happening but cannot reliably say who is who.
+  happening but cannot say who else joined in.
 - It measures speaking time. It does not measure who contributed, who was listening,
   or who was right.
 
