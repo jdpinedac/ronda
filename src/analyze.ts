@@ -187,6 +187,7 @@ function renderDiagnostics(result: DiarizationResult) {
     ['at the table', String(d.spansInForeground)],
     ['too far away, dropped', `${(d.backgroundMs / 1000).toFixed(1)} s`],
     ['not a participant', `${(d.otherVoicesMs / 1000).toFixed(1)} s`],
+    ['talking at once, credited to the floor holder', `${(d.overlapCreditedMs / 1000).toFixed(1)} s`],
     ['voice prints taken', String(d.embeddings)],
     ['speech detected', `${(d.speechMs / 1000).toFixed(1)} s`],
     ['longest single stretch', `${(d.longestSpanMs / 1000).toFixed(1)} s`],
