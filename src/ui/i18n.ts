@@ -37,12 +37,10 @@ const STRINGS = {
     es: 'Ya funciona: elige un archivo de audio de una conversación y Ronda te dice cuánto habló cada quien. Todo en tu navegador.',
     en: 'This works now: pick an audio file of a conversation and Ronda tells you how much each person spoke. All in your browser.',
   },
-  buildingTitle: { es: 'En construcción', en: 'Under construction' },
-  buildingBody: {
-    es: 'Falta la calibración de voces, que permitiría ponerle nombre a cada quien automáticamente. Aquí está el prototipo original, conservado como referencia.',
-    en: 'Voice calibration, which would name people automatically, is still to come. Here is the original prototype, kept for reference.',
+  releaseNotice: {
+    es: 'Versión de prueba {version}. Se publica para que la pruebes: todavía no es una versión final.',
+    en: 'Trial version {version}. Published so you can try it; not a final release yet.',
   },
-  tryPrototype: { es: 'Probar la versión antigua', en: 'Try the old version' },
   thisDevice: { es: 'Este dispositivo', en: 'This device' },
   deviceReady: {
     es: 'Tu navegador puede ejecutar Ronda.',

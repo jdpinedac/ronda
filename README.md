@@ -3,11 +3,12 @@
 **See who holds the floor.** Ronda listens to a conversation and measures how much of
 it each person speaks for. It never transcribes, and the audio never leaves the device.
 
-> Status: early construction. The feasibility work is done and documented in
-> [ADR 0001](docs/adr/0001-neural-speaker-embeddings-in-the-browser.md); the interface
-> is not built yet. A working prototype of the original idea lives in
-> [`example/ronda.html`](example/ronda.html) — open it in a browser to see where this
-> came from.
+> **Status: release candidate, not a production release.** Ronda is published at
+> [jdpinedac.github.io/ronda](https://jdpinedac.github.io/ronda/) so people can try it
+> at a real table and tell us what breaks. Both modes work end to end, the measurements
+> below are real, and the numbers on screen should be read with the limitations further
+> down in mind. Versions are tagged `vX.Y.Z-rc.N` until one earns a release; see
+> [CHANGELOG.md](CHANGELOG.md).
 
 ## Why it does not record you
 
@@ -156,7 +157,17 @@ headers itself; GitHub Pages cannot, so production restores it with
 
 Architecture decisions live in [`docs/adr/`](docs/adr/), the design spec in
 [`docs/superpowers/specs/`](docs/superpowers/specs/), and the throwaway feasibility
-probe in [`spike/`](spike/).
+probe in [`spike/`](spike/). The original hand-built prototype that ADR 0001 measured
+against was removed once the neural pipeline replaced it; it is in the history before
+`v0.1.0-rc.1`.
+
+### Releases
+
+Every push to `main` deploys to GitHub Pages. A release candidate is a tag `vX.Y.Z-rc.N`
+on `main` with a matching entry in [CHANGELOG.md](CHANGELOG.md) and a GitHub
+pre-release; the version in `package.json` is what the pages show in their footer, so
+bump it in the same commit as the changelog. A version drops the `-rc` suffix when a
+candidate has been used at real tables without a reported failure.
 
 ## Credits
 
@@ -166,7 +177,9 @@ distant microphone, used under CC-BY-4.0.
 
 ## Authors
 
-Ana Lopez and Juan Pineda.
+- **Juan Pineda** ([@jdpinedac](https://github.com/jdpinedac)) — design and code.
+- **Ana Lopez** ([@amarlo](https://github.com/amarlo)) — field testing: puts Ronda on real
+  tables and reports what breaks, which is where every fix so far has started.
 
 ## License
 
