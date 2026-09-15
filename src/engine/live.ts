@@ -62,6 +62,8 @@ export interface LiveSession {
 export interface LiveOptions {
   names?: readonly string[];
   calibratedProfiles?: number;
+  /** How many people are at the table. Beats names; see resolveSpeakerCount. */
+  speakerCount?: number;
   /** A television, radio or neighbouring table is audible. See CLUSTER_HEADROOM. */
   backgroundVoices?: boolean;
 }
@@ -72,6 +74,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
   const countHint = resolveSpeakerCount({
     ...(opts.names !== undefined ? { names: opts.names } : {}),
     ...(opts.calibratedProfiles !== undefined ? { calibratedProfiles: opts.calibratedProfiles } : {}),
+    ...(opts.speakerCount !== undefined ? { speakerCount: opts.speakerCount } : {}),
   });
 
   let pending: Float32Array[] = [];

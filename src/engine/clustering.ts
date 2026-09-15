@@ -226,7 +226,7 @@ export function keepBusiest(
   return labels.map((l) => rank.get(l) ?? OTHER_VOICE);
 }
 
-export type SpeakerCountSource = 'calibration' | 'names' | 'automatic';
+export type SpeakerCountSource = 'calibration' | 'count' | 'names' | 'automatic';
 
 export interface SpeakerCountHint {
   /** Null means "work it out from the audio". */
@@ -238,18 +238,24 @@ export interface SpeakerCountHint {
 /**
  * The tiered strategy: use the most reliable signal available.
  *
- * Calibrated profiles are ground truth — those people demonstrably exist.
- * Typed names are a strong hint, though someone may stay silent or a visitor
- * may join. A single name tells us nothing about the size of the group, so it
- * is ignored. With nothing to go on, fall back to thresholding and tell the
- * user the result is approximate.
+ * Calibrated profiles are ground truth — those people demonstrably exist. An
+ * explicit head count is the next best thing: it is the one fact the person in
+ * the room knows for certain and the audio cannot supply (see ADR 0004). Typed
+ * names are a weaker hint, though someone may stay silent or a visitor may
+ * join. A single name or a count below two tells us nothing about the size of
+ * the group, so it is ignored. With nothing to go on, fall back to thresholding
+ * and tell the user the result is approximate.
  */
 export function resolveSpeakerCount(opts: {
   names?: readonly string[];
   calibratedProfiles?: number;
+  speakerCount?: number;
 }): SpeakerCountHint {
   if (opts.calibratedProfiles !== undefined && opts.calibratedProfiles >= 2) {
     return { k: opts.calibratedProfiles, source: 'calibration', confident: true };
+  }
+  if (opts.speakerCount !== undefined && Number.isInteger(opts.speakerCount) && opts.speakerCount >= 2) {
+    return { k: opts.speakerCount, source: 'count', confident: true };
   }
   const named = (opts.names ?? []).map((n) => n.trim()).filter(Boolean);
   if (named.length >= 2) return { k: named.length, source: 'names', confident: true };
