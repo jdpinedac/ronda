@@ -226,6 +226,70 @@ export function keepBusiest(
   return labels.map((l) => rank.get(l) ?? OTHER_VOICE);
 }
 
+/**
+ * Extra groups to cut before keeping the busiest `k`, when the head count is
+ * known and there is enough evidence for the extra groups to mean anything.
+ *
+ * Over a long conversation on a table microphone, a person's voice drifts:
+ * they turn away, lean back, get animated. A few of their segments end up far
+ * from the rest, and average linkage, cutting at exactly k, isolates those
+ * outliers as a group of their own. To free the slot it merges two real people
+ * — on a 17-minute four-person meeting, the two men. Cutting wider lets the
+ * outliers form splinter groups that are then placed back onto the k main
+ * groups (see placeSplinters) instead of costing a person.
+ *
+ * The headroom grows with the number of voice samples because with few
+ * samples the busiest groups are not yet the real people: on the opening
+ * minutes of that meeting, where one person presents and the others barely
+ * speak, a fixed headroom of eight discarded a real participant's only group.
+ * One extra group per 25 samples, capped at eight, leaves short sessions
+ * exactly as they were and gives long ones the room they need. Measured in
+ * ADR 0005.
+ */
+export function splinterHeadroom(samples: number): number {
+  return Math.min(8, Math.floor(samples / 25));
+}
+
+/**
+ * Gives every segment marked OTHER_VOICE to the nearest kept group, by
+ * distance to that group's duration-weighted centroid. Kept labels are left
+ * alone. With nothing kept there is nothing to place into, and the labels are
+ * returned unchanged.
+ */
+export function placeSplinters(
+  vectors: readonly Float32Array[],
+  labels: readonly number[],
+  durationsMs: readonly number[],
+): number[] {
+  const groups = new Map<number, number[]>();
+  labels.forEach((l, i) => {
+    if (l === OTHER_VOICE) return;
+    const g = groups.get(l);
+    if (g) g.push(i); else groups.set(l, [i]);
+  });
+  if (groups.size === 0 || !labels.includes(OTHER_VOICE)) return [...labels];
+
+  const centroids = [...groups.entries()].map(([label, idxs]) => {
+    const c = new Float32Array(vectors[idxs[0]!]!.length);
+    for (const i of idxs) {
+      const w = durationsMs[i] ?? 0;
+      for (let d = 0; d < c.length; d++) c[d] = c[d]! + vectors[i]![d]! * w;
+    }
+    return { label, c: normalise(c) };
+  });
+
+  return labels.map((l, i) => {
+    if (l !== OTHER_VOICE) return l;
+    let best = centroids[0]!.label;
+    let bestDist = Infinity;
+    for (const { label, c } of centroids) {
+      const d = cosineDistance(vectors[i]!, c);
+      if (d < bestDist) { bestDist = d; best = label; }
+    }
+    return best;
+  });
+}
+
 export type SpeakerCountSource = 'calibration' | 'count' | 'names' | 'automatic';
 
 export interface SpeakerCountHint {
