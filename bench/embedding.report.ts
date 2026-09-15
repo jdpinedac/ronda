@@ -31,6 +31,8 @@ const RECORDINGS = [
 const STRATEGIES: Record<string, { winMs: number; hopMs: number }> = {
   /** One embedding per span, as Ronda does today. Useful with EMB_MODEL. */
   span: { winMs: Infinity, hopMs: Infinity },
+  /** Spans that touch across a window boundary are joined before embedding. */
+  merged: { winMs: Infinity, hopMs: Infinity },
   win2: { winMs: 2000, hopMs: 1000 },
   win3: { winMs: 3000, hopMs: 1500 },
   win15: { winMs: 1500, hopMs: 750 },
@@ -82,7 +84,17 @@ describe(`re-embedding with ${strategy}`, () => {
       const audio = readAudio16k(wav);
       const totalMs = (audio.length / SAMPLE_RATE) * 1000;
       const { embedding } = await loadModels();
-      const spans = await usableSpans(audio);
+      let spans = await usableSpans(audio);
+      if (strategy === 'merged') {
+        // The trust regions tile the timeline every 5 s, so a single turn that
+        // crosses a boundary comes back as two spans that touch. Join them.
+        const joined: Span[] = [];
+        for (const s of spans) {
+          const last = joined[joined.length - 1];
+          if (last && s.startMs - last.endMs < 60) last.endMs = s.endMs; else joined.push({ ...s });
+        }
+        spans = joined;
+      }
       const pieces: { startMs: number; endMs: number }[] = [];
       for (const s of spans) {
         const len = s.endMs - s.startMs;

@@ -93,15 +93,51 @@ worse at three minutes (0.400 → 0.465) and at fourteen (0.426 → 0.433) while
 better at eight (0.513 → 0.412), eleven (0.511 → 0.408) and the whole (0.395 →
 0.306). Those prefixes are one meeting's opening, not independent recordings.
 
-The floor itself is the next problem, and it is not in the clustering. On TS3003a the
-dominant speaker has 62 of 206 segments closer to someone else's centroid; the oracle
-cannot fix that and neither can a better model, since three of them agree. Either the
-segmentation hands the embedder mixed or misattributed audio the annotation does not
-mark as overlap, or this speaker genuinely sounds like different people from where the
-microphone sits. Telling those apart needs listening to the segments, not another
-sweep.
+## What the remaining third is made of
+
+The floor is not in the clustering, so the segments themselves were examined
+(`bench/segments.report.ts`). On TS3003a the dominant speaker has 62 of 206 segments
+closer to someone else's centroid. Those segments are not impure — the annotation
+gives them a purity of 1.00, same as the rest — and they do not sit on window
+boundaries more than others. They are **short**: median 1.5 s against 4.3 s for the
+well-placed ones, and the pattern holds on all three meetings.
+
+| Segment length | Misplaced, ES2004a | IS1009a | TS3003a |
+|---|---|---|---|
+| under 1.5 s | 7 of 37 | 7 of 34 | 30 of 55 |
+| 1.5–3 s | 1 of 68 | 2 of 50 | 24 of 71 |
+| 3–6 s | 1 of 80 | 1 of 74 | 8 of 113 |
+
+A one-second "yes" or "mm-hm" produces an embedding that lands near whoever it
+resembles, and there is nothing downstream that can tell. Everything tried on this was
+refuted on DER: not attributing segments under 1.5 s (ES2004a 0.306 → 0.357, because
+what is not attributed is missed), not attributing segments whose nearest centroid
+wins by less than 0.1 or 0.2 (0.303 on ES2004a but 0.608 on TS3003a), clustering
+only the long segments and placing the short ones (no change or worse), and joining
+spans that touch across a window boundary before embedding (raises the floor,
+0.306 → 0.323).
+
+Misses, not confusion, are most of the error. Rasterising the whole timeline against
+the annotation (`bench/coverage.report.ts`):
+
+| Annotated single-speaker speech | ES2004a | IS1009a | TS3003a |
+|---|---|---|---|
+| attributed to someone | 84% | 88% | 79% |
+| heard as silence by the segmentation model | 10% | 3% | 15% |
+| in a span under 0.8 s, never embedded | 4% | 5% | 5% |
+| heard as overlap | 2% | 3% | 1% |
+
+Annotated overlap is a further 124 s, 82 s and 45 s, of which Ronda attributes a third
+to a half to one person and deliberately leaves the rest. So the third of the speech
+that is wrong or missing over a long meeting splits three ways: overlap that is not
+attributed by design, speech the segmentation model does not hear (some of which is
+the annotation's generous turn boundaries rather than a real miss), and short
+interjections that are either dropped or, when embedded, unreliable. None of these is
+a clustering problem, and none has a cheap fix. The first two are where the next
+measurable gain is; the third may not have one with an embedding model.
 
 `bench/embedding.report.ts` re-embeds recordings with a different strategy or model,
 `bench/score.report.ts` scores any dump against the annotation with the oracle
-alongside, and `test/long-meeting-regression.test.ts` pins the whole-meeting result
+alongside, `bench/segments.report.ts` and `bench/coverage.report.ts` produce the two
+tables above, and `test/long-meeting-regression.test.ts` pins the whole-meeting result
 with the stored embeddings, in milliseconds.
