@@ -89,6 +89,8 @@ export interface DiarizationResult {
 export interface DiarizeOptions {
   names?: readonly string[];
   calibratedProfiles?: number;
+  /** How many people are at the table. Beats names; see resolveSpeakerCount. */
+  speakerCount?: number;
   /**
    * Set when a television, radio or neighbouring table is audible. Allows extra
    * clusters so those voices get their own group instead of being forced into a
@@ -165,6 +167,7 @@ export async function diarize(
   const countHint = resolveSpeakerCount({
     ...(opts.names !== undefined ? { names: opts.names } : {}),
     ...(opts.calibratedProfiles !== undefined ? { calibratedProfiles: opts.calibratedProfiles } : {}),
+    ...(opts.speakerCount !== undefined ? { speakerCount: opts.speakerCount } : {}),
   });
   // Centring is applied only when the speaker count is known.
   //

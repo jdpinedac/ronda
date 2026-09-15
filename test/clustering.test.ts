@@ -176,6 +176,25 @@ describe('resolveSpeakerCount — the tiered strategy from ADR 0001', () => {
     expect(resolveSpeakerCount({ names: ['Ana'] }).source).toBe('automatic');
   });
 
+  it('takes an explicit head count over the names typed', () => {
+    const r = resolveSpeakerCount({ speakerCount: 4, names: ['Ana', 'Juan'] });
+    expect(r).toEqual({ k: 4, source: 'count', confident: true });
+  });
+
+  it('still lets calibrated profiles beat an explicit head count', () => {
+    expect(resolveSpeakerCount({ speakerCount: 4, calibratedProfiles: 3 }).k).toBe(3);
+  });
+
+  it('ignores a head count below two, which leaves nothing to split', () => {
+    expect(resolveSpeakerCount({ speakerCount: 1 }).source).toBe('automatic');
+    expect(resolveSpeakerCount({ speakerCount: 0, names: ['Ana', 'Juan'] }).k).toBe(2);
+  });
+
+  it('ignores a head count that is not a whole number', () => {
+    expect(resolveSpeakerCount({ speakerCount: Number.NaN }).source).toBe('automatic');
+    expect(resolveSpeakerCount({ speakerCount: 3.5 }).source).toBe('automatic');
+  });
+
   it('ignores blank entries from a trailing comma', () => {
     expect(resolveSpeakerCount({ names: ['Ana', 'Juan', '', '  '] })).toEqual({
       k: 2, source: 'names', confident: true,
