@@ -82,20 +82,23 @@ neither. Another 5.9 s is stretches too short to identify reliably.
 So on that excerpt the time each person is credited with is close to right, and what
 Ronda misses, it mostly misses on purpose.
 
-The whole meeting is a different story. Over all 17.5 minutes, with the head count
-given:
+Whole meetings are harder. Measured over three complete AMI meetings, four people
+each, with the head count given:
 
-| | |
-|---|---|
-| **Diarization error rate** | **0.395** |
-| Time share | 47/28/22/4 against a true 42/29/18/11 |
+| Meeting | Length | Diarization error rate | Time share against the truth |
+|---|---|---|---|
+| ES2004a | 17.5 min | **0.306** | 47/24/17/11 against 42/29/18/11 |
+| IS1009a | 13.4 min | 0.367 | 57/21/16/6 against 62/20/9/9 |
+| TS3003a | 24.6 min | 0.487 | 59/14/14/13 against 70/13/11/5 |
 
-Two of the four people end up merged into one group, and one person nearly
-disappears. Long conversations on a single distant microphone are the open problem;
-the three-minute figure above is the best case, not the typical one. Both numbers come
-from `npm run bench`, which runs the real pipeline against these recordings, and
-`npm run bench:offline` repeats the clustering on stored embeddings in seconds. Fetch
-the recordings with `spike/08-fetch-ami.py`.
+Roughly a third of the speech is attributed wrongly or not at all over a long meeting,
+against a fifth over three minutes. Until [ADR 0005](docs/adr/0005-place-splinters-back-when-the-head-count-is-known.md)
+it was worse: cutting at exactly the head count merged two real people on every one of
+these meetings. Nobody is merged now, but the three-minute figure above is the best
+case, not the typical one. All numbers come from `npm run bench`, which runs the real
+pipeline against these recordings; `npm run bench:offline` repeats the clustering on
+stored embeddings in seconds. Fetch the recordings with `spike/08-fetch-ami.py` and
+`spike/10-fetch-ami-meeting.py`.
 
 ## Limitations, stated plainly
 
@@ -116,9 +119,9 @@ the recordings with `spike/08-fetch-ami.py`.
   as a non-participant.
 - A single microphone at a large table is the hardest case. Expect approximation, not
   accounting.
-- Accuracy falls with length. Measured on a four-person meeting, three minutes come out
-  nearly right and the full seventeen merge two people. Until that is fixed, trust
-  short sessions more than long ones.
+- Accuracy falls with length. Over three minutes of a four-person meeting a fifth of the
+  speech is misattributed or missed; over a whole meeting it is a third. Trust short
+  sessions more than long ones.
 - When several people talk over each other for a long stretch, Ronda knows it is
   happening but cannot reliably say who is who.
 - It measures speaking time. It does not measure who contributed, who was listening,
