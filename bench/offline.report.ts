@@ -12,7 +12,8 @@
 import { describe, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
-  agglomerative, absorbTinyClusters, centreEmbeddings, keepBusiest, cosineDistance, DEFAULT_THRESHOLD,
+  agglomerative, absorbTinyClusters, centreEmbeddings, keepBusiest, placeSplinters, splinterHeadroom,
+  cosineDistance, DEFAULT_THRESHOLD,
 } from '../src/engine/clustering.js';
 import { ROOT } from './node-models.js';
 
@@ -77,8 +78,14 @@ describe(`offline: ${fx.name}`, () => {
     }).join('   '));
   });
 
-  it(`head count known (k=${fx.people}, centred): what each cluster contains`, () => {
+  it(`head count known (k=${fx.people}): cut at exactly k, the failure ADR 0005 fixes`, () => {
     const labels = keepBusiest(agglomerative(centreEmbeddings(V), { k: fx.people }), durs, fx.people);
     console.log(composition(labels));
+  });
+
+  it(`head count known (k=${fx.people}): as shipped, with splinter headroom placed back`, () => {
+    const C = centreEmbeddings(V);
+    const wide = agglomerative(C, { k: fx.people + splinterHeadroom(C.length) });
+    console.log(composition(placeSplinters(C, keepBusiest(wide, durs, fx.people), durs)));
   });
 });
