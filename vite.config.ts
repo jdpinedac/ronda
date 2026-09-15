@@ -1,4 +1,7 @@
 import { defineConfig } from 'vitest/config';
+import { readFileSync } from 'node:fs';
+
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
 // GitHub Pages serves the project at /<repo>/. Override with BASE_PATH when
 // deploying elsewhere (a custom domain wants '/').
@@ -6,6 +9,8 @@ const base = process.env.BASE_PATH ?? '/ronda/';
 
 export default defineConfig({
   base,
+  // Shown in every page's footer, so a tester can say which build they used.
+  define: { __RONDA_VERSION__: JSON.stringify(version) },
   build: {
     target: 'es2022',
     sourcemap: true,

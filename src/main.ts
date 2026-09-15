@@ -15,10 +15,9 @@ setText('live-link', t('listen'));
 setText('analyse-cta', t('analyseCta'));
 setText('analyse-cta-body', t('analyseCtaBody'));
 setText('analyse-link', t('analyse'));
-setText('building-title', t('buildingTitle'));
-setText('building-body', t('buildingBody'));
-setText('try-prototype', t('tryPrototype'));
 setText('device-title', t('thisDevice'));
+setText('release', t('releaseNotice').replace('{version}', __RONDA_VERSION__));
+setText('version', `Ronda ${__RONDA_VERSION__}`);
 
 // Until the interface exists, the most useful thing this page can do is tell
 // someone whether the phone they want to put on the table is up to the job.

@@ -18,6 +18,7 @@ setText('example', t('tryExample'));
 setText('go', t('analyse'));
 setText('results-title', t('results'));
 setText('center-label', t('spokenTime'));
+setText('version', `Ronda ${__RONDA_VERSION__}`);
 
 const PALETTE = ['#B8552E', '#2F6B5E', '#C9932B', '#41497C', '#8C4067', '#5C6B32', '#3C7A99', '#9C3D3D'];
 
