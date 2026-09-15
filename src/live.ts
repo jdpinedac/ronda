@@ -8,6 +8,8 @@ const $ = (id: string) => document.getElementById(id);
 const setText = (id: string, v: string) => { const el = $(id); if (el) el.textContent = v; };
 
 setText('live-body', t('liveBody'));
+setText('count-label', t('countLabel'));
+setText('count-hint', t('countHint'));
 setText('names-label', t('namesLabel'));
 setText('names-hint', t('namesHint'));
 setText('bg-voices-label', t('backgroundVoicesLabel'));
@@ -20,6 +22,30 @@ const PALETTE = ['#B8552E', '#2F6B5E', '#C9932B', '#41497C', '#8C4067', '#5C6B32
 
 const toggle = $('toggle') as HTMLButtonElement | null;
 const namesInput = $('names') as HTMLInputElement | null;
+const countInput = $('count') as HTMLInputElement | null;
+
+/**
+ * The head count is the one input Ronda insists on. Without it the speaker
+ * count is guessed from a distance threshold, and on a real table that guess
+ * grows with the length of the conversation — a four-person meeting reached
+ * ten "voices" after a quarter of an hour. See ADR 0004.
+ */
+function headCount(): number | null {
+  const n = Number(countInput?.value);
+  return Number.isInteger(n) && n >= 2 ? n : null;
+}
+
+const typedNames = () => (namesInput?.value ?? '').split(',').map((n) => n.trim()).filter(Boolean);
+
+function refreshReady() {
+  if (toggle && !running) toggle.disabled = headCount() === null;
+}
+countInput?.addEventListener('input', refreshReady);
+// Typing names is a natural way to say how many there are; offer it as the count.
+namesInput?.addEventListener('input', () => {
+  if (countInput && !countInput.value && typedNames().length >= 2) countInput.value = String(typedNames().length);
+  refreshReady();
+});
 
 let capture: Capture | null = null;
 let session: LiveSession | null = null;
@@ -52,7 +78,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 setText('toggle', t('listen'));
-if (toggle) toggle.disabled = false;
+refreshReady();
 
 function formatTime(ms: number): string {
   const s = Math.max(0, Math.round(ms / 1000));
@@ -89,7 +115,7 @@ function render(state: LiveState) {
   setText('center-time', formatTime(state.spokenMs));
   setText('center-elapsed', `${formatTime(state.elapsedMs)} ${t('listen') === 'Listen' ? 'at the table' : 'en la mesa'}`);
 
-  const typed = (namesInput?.value ?? '').split(',').map((n) => n.trim()).filter(Boolean);
+  const typed = typedNames();
   legend.innerHTML = '';
   state.speakers.forEach((sp, i) => {
     const li = document.createElement('li');
@@ -115,10 +141,7 @@ function render(state: LiveState) {
 
   const warn = $('warning');
   if (warn) {
-    if (!state.countHint.confident && state.speakers.length > 4) {
-      warn.textContent = t('tooManySpeakers');
-      warn.hidden = false;
-    } else if (state.samples > 0 && state.reliability !== 'good') {
+    if (state.samples > 0 && state.reliability !== 'good') {
       warn.textContent = state.reliability === 'insufficient' ? t('insufficient') : t('lowConfidence');
       warn.hidden = false;
     } else {
@@ -154,7 +177,7 @@ async function start() {
     await loadModels();
   } catch {
     showError(t('analyseFailed'));
-    if (toggle) toggle.disabled = false;
+    refreshReady();
     return;
   }
 
@@ -175,18 +198,23 @@ async function start() {
     showError(t('micDenied'));
     setText('badge-text', t('waiting'));
     setText('hint', t('tellTheTable'));
-    if (toggle) toggle.disabled = false;
+    refreshReady();
     return;
   }
 
-  const names = (namesInput?.value ?? '').split(',').map((n) => n.trim()).filter(Boolean);
+  const count = headCount();
   const bgVoices = ($('bg-voices') as HTMLInputElement | null)?.checked ?? false;
-  session = await startLiveSession({ names, backgroundVoices: bgVoices });
+  session = await startLiveSession({
+    names: typedNames(),
+    ...(count !== null ? { speakerCount: count } : {}),
+    backgroundVoices: bgVoices,
+  });
   session.onUpdate(render);
   capture.onAudio((samples) => session?.push(samples));
 
   running = true;
   if (namesInput) namesInput.disabled = true;
+  if (countInput) countInput.disabled = true;
   setText('toggle', t('stop'));
   toggle?.classList.add('stopping');
   setText('badge-text', t('listening'));
@@ -222,7 +250,8 @@ async function stop() {
   setText('badge-text', t('waiting'));
   setText('hint', t('tellTheTable'));
   if (namesInput) namesInput.disabled = false;
-  if (toggle) toggle.disabled = false;
+  if (countInput) countInput.disabled = false;
+  refreshReady();
 }
 
 toggle?.addEventListener('click', () => { void (running ? stop() : start()); });

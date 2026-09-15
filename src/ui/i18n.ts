@@ -8,9 +8,17 @@ const STRINGS = {
     es: 'Ponla en el centro de la mesa y pulsa Escuchar. Distingue voces por su timbre, nunca por lo que dicen.',
     en: 'Put it in the middle of the table and press Listen. It tells voices apart by their timbre, never by what they say.',
   },
+  countLabel: {
+    es: '¿Cuántas personas hay en la mesa?',
+    en: 'How many people are at the table?',
+  },
+  countHint: {
+    es: 'Es el dato que más ayuda. Sin él, Ronda parte a una misma persona en varias voces.',
+    en: 'This helps more than anything else. Without it, Ronda splits one person into several voices.',
+  },
   namesLabel: {
-    es: 'Quiénes están en la mesa (opcional, separados por comas)',
-    en: 'Who is at the table (optional, comma separated)',
+    es: 'Nombres (opcional, separados por comas)',
+    en: 'Names (optional, comma separated)',
   },
   listen: { es: 'Escuchar', en: 'Listen' },
   stop: { es: 'Detener', en: 'Stop' },
@@ -85,13 +93,14 @@ const STRINGS = {
   chooseFile: { es: 'Elegir archivo', en: 'Choose file' },
   analyse: { es: 'Analizar', en: 'Analyse' },
   namesHint: {
-    es: 'Si escribes quiénes hablan, acierta bastante más.',
-    en: 'Telling it who is speaking makes it considerably more accurate.',
+    es: 'Solo son etiquetas para la lista: Ronda todavía no reconoce quién es quién.',
+    en: 'Labels for the list only: Ronda does not yet recognise who is who.',
   },
   segmenting: { es: 'Buscando dónde habla cada quien…', en: 'Finding who speaks where…' },
   identifying: { es: 'Comparando las voces…', en: 'Comparing voices…' },
   loadingTheModels: { es: 'Descargando los modelos (solo la primera vez)…', en: 'Downloading the models (first time only)…' },
   results: { es: 'Reparto de la palabra', en: 'Share of the floor' },
+  countFromCount: { es: 'Usando el número de personas que indicaste', en: 'Using the head count you gave' },
   countFromNames: { es: 'Usando los nombres que escribiste', en: 'Using the names you typed' },
   countAutomatic: {
     es: 'Sin nombres: el número de personas es una estimación, puede fallar.',
@@ -104,10 +113,6 @@ const STRINGS = {
     en: 'I could not find enough speech in that recording.',
   },
   analyseFailed: { es: 'No pude analizar ese archivo.', en: 'I could not analyse that file.' },
-  tooManySpeakers: {
-    es: '¿Salieron más personas de las que hay? Suele ser ruido de voces de fondo. Escribe los nombres de quienes están en la mesa: saber cuántos son es lo que más ayuda.',
-    en: 'More people than there are? That is usually background chatter. Type the names of who is at the table — knowing how many there are helps more than anything else.',
-  },
   lowConfidence: {
     es: 'Encontré pocos fragmentos de voz claros, así que este reparto es poco fiable. Suele pasar con grabaciones cortas, con mucho ruido de fondo, o cuando alguien habla muy poco.',
     en: 'I found few clear stretches of speech, so this split is not reliable. That usually means a short recording, a lot of background noise, or someone who barely spoke.',
