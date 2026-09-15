@@ -14,3 +14,6 @@ spike/bench/test.wav
 public/prototype/
 public/testdata/
 spike/altmodels/
+
+# Benchmark scratch output (embeddings dumped with BENCH_DUMP=1)
+bench/out/
