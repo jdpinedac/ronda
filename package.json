@@ -11,6 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "bench": "vitest run --config bench/vitest.config.mts",
+    "bench:offline": "vitest run --config bench/vitest.config.mts bench/offline.report.ts",
     "lint": "eslint . && tsc --noEmit"
   },
   "devDependencies": {

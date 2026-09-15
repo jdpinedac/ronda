@@ -8,8 +8,10 @@ when, which is what makes measurement possible at all.
     python3 -m venv venv && venv/bin/pip install duckdb
     venv/bin/python 08-fetch-ami.py
 
-Writes public/testdata/ami-meeting.wav and ami-meeting.truth.json. Neither is
-committed; the audio is 5.7 MB and rebuilding it takes under a minute.
+Writes public/testdata/ami-meeting.wav and ami-meeting.truth.json (a three-minute
+excerpt) and ami-ES2004a.wav and ami-ES2004a.truth.json (the whole 17.5-minute
+meeting, which is where the benchmark in ADR 0004 comes from). Nothing is
+committed; the audio is about 40 MB and rebuilding it takes under a minute.
 """
 import json
 import pathlib
@@ -41,7 +43,22 @@ subprocess.run(
      "-ss", str(START_MS / 1000), "-t", str(WINDOW_MS / 1000),
      "-ar", "16000", "-ac", "1", str(out / "ami-meeting.wav")],
     check=True)
+subprocess.run(
+    ["ffmpeg", "-v", "error", "-y", "-i", str(full),
+     "-ar", "16000", "-ac", "1", str(out / "ami-ES2004a.wav")],
+    check=True)
 full.unlink()
+
+whole = sorted(
+    ({"startMs": int(s * 1000), "endMs": int(e * 1000), "speaker": who}
+     for s, e, who in zip(starts, ends, speakers)),
+    key=lambda t: t["startMs"])
+(out / "ami-ES2004a.truth.json").write_text(json.dumps({
+    "meeting": "ES2004a",
+    "source": "AMI Corpus, single distant microphone (CC-BY-4.0)",
+    "speakers": sorted({t["speaker"] for t in whole}),
+    "turns": whole,
+}, indent=1))
 
 turns = []
 for s, e, who in zip(starts, ends, speakers):
