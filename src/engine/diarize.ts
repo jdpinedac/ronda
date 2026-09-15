@@ -8,8 +8,8 @@
 import { computeFbank, WESPEAKER_FBANK } from './fbank.js';
 import {
   agglomerative, absorbTinyClusters, normalise, resolveSpeakerCount,
-  centreEmbeddings, keepBusiest, CLUSTER_HEADROOM, OTHER_VOICE,
-  DEFAULT_THRESHOLD, type SpeakerCountHint,
+  centreEmbeddings, keepBusiest, placeSplinters, splinterHeadroom,
+  CLUSTER_HEADROOM, OTHER_VOICE, DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
 import { decodeSegmentation, speechSpans, type Span } from './segmentation.js';
@@ -185,13 +185,24 @@ export async function diarize(
   let labels: number[] = [];
   if (vectors.length > 0) {
     if (countHint.k !== null) {
-      // Cluster with headroom, then keep only the busiest groups. A television
-      // or the next table would otherwise be forced into somebody's tally, and
-      // the cost is not a small error: it merges two real people to free a
-      // slot. See CLUSTER_HEADROOM.
-      const headroom = opts.backgroundVoices ? CLUSTER_HEADROOM : 0;
-      const wide = agglomerative(centreEmbeddings(vectors), { k: countHint.k + headroom });
-      labels = keepBusiest(wide, durationsOf(usable, vectors.length), countHint.k);
+      // Cluster with headroom, then keep only the busiest groups. Cutting at
+      // exactly k forces every surplus voice into somebody's tally, and the
+      // cost is not a small error: it merges two real people to free a slot.
+      //
+      // What happens to the surplus depends on where it came from. When the
+      // user says a television or the next table is audible, the surplus is
+      // intruders and is discarded (CLUSTER_HEADROOM). Otherwise it is one
+      // participant's own outliers over a long conversation, and it is placed
+      // back onto the nearest participant (splinterHeadroom, placeSplinters).
+      const centred = centreEmbeddings(vectors);
+      const durations = durationsOf(usable, vectors.length);
+      if (opts.backgroundVoices) {
+        const wide = agglomerative(centred, { k: countHint.k + CLUSTER_HEADROOM });
+        labels = keepBusiest(wide, durations, countHint.k);
+      } else {
+        const wide = agglomerative(centred, { k: countHint.k + splinterHeadroom(vectors.length) });
+        labels = placeSplinters(centred, keepBusiest(wide, durations, countHint.k), durations);
+      }
     } else {
       labels = agglomerative(vectors, { threshold: DEFAULT_THRESHOLD });
     }

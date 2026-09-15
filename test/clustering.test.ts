@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   cosineDistance, normalise, agglomerative, absorbTinyClusters,
   resolveSpeakerCount, DEFAULT_THRESHOLD, centreEmbeddings,
+  splinterHeadroom, placeSplinters, OTHER_VOICE,
 } from '../src/engine/clustering.js';
 
 /**
@@ -236,5 +237,49 @@ describe('centreEmbeddings', () => {
     const { vectors } = makeVoices(2, 1);
     expect(centreEmbeddings(vectors)).toEqual(vectors);
     expect(centreEmbeddings([])).toEqual([]);
+  });
+});
+
+describe('splinterHeadroom', () => {
+  it('asks for no extra groups while there is little evidence', () => {
+    expect(splinterHeadroom(0)).toBe(0);
+    expect(splinterHeadroom(24)).toBe(0);
+  });
+
+  it('grows with the number of voice samples', () => {
+    expect(splinterHeadroom(25)).toBe(1);
+    expect(splinterHeadroom(55)).toBe(2);
+    expect(splinterHeadroom(178)).toBe(7);
+  });
+
+  it('caps at eight', () => {
+    expect(splinterHeadroom(227)).toBe(8);
+    expect(splinterHeadroom(10_000)).toBe(8);
+  });
+});
+
+describe('placeSplinters', () => {
+  const { vectors } = makeVoices(2, 4);
+  const durations = vectors.map(() => 2000);
+
+  it('gives every unplaced segment to the nearest kept group', () => {
+    // Speaker 0 is indices 0-3, speaker 1 is 4-7. Two of each are unplaced.
+    const labels = [0, 0, OTHER_VOICE, OTHER_VOICE, 1, 1, OTHER_VOICE, OTHER_VOICE];
+    expect(placeSplinters(vectors, labels, durations)).toEqual([0, 0, 0, 0, 1, 1, 1, 1]);
+  });
+
+  it('leaves placed segments alone', () => {
+    const labels = [0, 0, 0, 0, 1, 1, 1, OTHER_VOICE];
+    expect(placeSplinters(vectors, labels, durations).slice(0, 7)).toEqual([0, 0, 0, 0, 1, 1, 1]);
+  });
+
+  it('changes nothing when nothing is unplaced', () => {
+    const labels = [0, 0, 0, 0, 1, 1, 1, 1];
+    expect(placeSplinters(vectors, labels, durations)).toEqual(labels);
+  });
+
+  it('changes nothing when there is no group to place into', () => {
+    const labels = vectors.map(() => OTHER_VOICE);
+    expect(placeSplinters(vectors, labels, durations)).toEqual(labels);
   });
 });

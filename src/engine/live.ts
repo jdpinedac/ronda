@@ -14,7 +14,8 @@
 import { computeFbank, WESPEAKER_FBANK } from './fbank.js';
 import {
   agglomerative, absorbTinyClusters, centreEmbeddings, normalise, resolveSpeakerCount,
-  keepBusiest, CLUSTER_HEADROOM, OTHER_VOICE, DEFAULT_THRESHOLD, type SpeakerCountHint,
+  keepBusiest, placeSplinters, splinterHeadroom, CLUSTER_HEADROOM, OTHER_VOICE,
+  DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
 import { rms, selectForeground } from './levels.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
@@ -108,6 +109,15 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     return block;
   };
 
+  /** Same policy as diarize(): discard surplus voices if told about intruders, otherwise place them back. */
+  function clusterKnownCount(centred: Float32Array[], k: number): number[] {
+    if (opts.backgroundVoices) {
+      return keepBusiest(agglomerative(centred, { k: k + CLUSTER_HEADROOM }), durations, k);
+    }
+    const wide = agglomerative(centred, { k: k + splinterHeadroom(centred.length) });
+    return placeSplinters(centred, keepBusiest(wide, durations, k), durations);
+  }
+
   /** Extract embeddings from one block, then let the audio go. */
   async function analyse(block: Float32Array, blockMs: number) {
     const logits = await runSegmentation(segmentation, block);
@@ -142,13 +152,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     // Re-cluster everything heard so far, so earlier mistakes get corrected.
     if (vectors.length > 0) {
       labels = countHint.k !== null
-        ? keepBusiest(
-          agglomerative(centreEmbeddings(vectors), {
-            k: countHint.k + (opts.backgroundVoices ? CLUSTER_HEADROOM : 0),
-          }),
-          durations,
-          countHint.k,
-        )
+        ? clusterKnownCount(centreEmbeddings(vectors), countHint.k)
         : absorbTinyClusters(
           vectors,
           agglomerative(vectors, { threshold: DEFAULT_THRESHOLD }),
