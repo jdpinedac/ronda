@@ -19,7 +19,7 @@ import {
 } from './clustering.js';
 import { rms, selectForeground } from './levels.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
-import { decodeSegmentation, speechSpans } from './segmentation.js';
+import { decodeSegmentation, speechSpans, creditOverlap, type Span } from './segmentation.js';
 import { assessReliability, type Reliability } from './diarize.js';
 
 /** Analysed in blocks of this length. The segmentation model expects 10 s. */
@@ -85,6 +85,8 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
 
   const vectors: Float32Array[] = [];
   const durations: number[] = [];
+  /** Overlap credited to each voice sample: whoever held the floor when it began. */
+  const credited: number[] = [];
   /** Levels of every stretch considered so far, for the background threshold. */
   const levels: number[] = [];
   let backgroundMs = 0;
@@ -133,6 +135,9 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     levels.push(...blockLevels);
 
     let heard: number | null = null;
+    const attributedInBlock: Span[] = [];
+    const vectorOf: number[] = [];
+    const lastBefore = vectors.length - 1;
     for (let i = 0; i < usable.length; i++) {
       const s = usable[i]!;
       if (!keep[i]) {
@@ -146,8 +151,22 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       const raw = await runEmbedding(embedding, frames, frames.length / numBins, numBins);
       vectors.push(normalise(Float32Array.from(raw)));
       durations.push(s.endMs - s.startMs);
+      credited.push(0);
       heard = vectors.length - 1;
+      attributedInBlock.push(s);
+      vectorOf.push(heard);
     }
+
+    // Overlap goes to whoever held the floor when it began; before the first
+    // voice of this block, that is the last voice of the previous one.
+    const credit = creditOverlap(attributedInBlock, spans.filter((s) => s.speakers.length > 1));
+    credit.ownerOf.forEach((owner, oi) => {
+      const target = owner >= 0 ? vectorOf[owner]! : lastBefore;
+      if (target >= 0) {
+        const o = spans.filter((s) => s.speakers.length > 1)[oi]!;
+        credited[target] = credited[target]! + (o.endMs - o.startMs);
+      }
+    });
 
     // Re-cluster everything heard so far, so earlier mistakes get corrected.
     if (vectors.length > 0) {
@@ -167,12 +186,13 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     const byId = new Map<number, { totalMs: number; segments: number }>();
     let otherVoicesMs = 0;
     labels.forEach((l, i) => {
+      const ms = (durations[i] ?? 0) + (credited[i] ?? 0);
       if (l === OTHER_VOICE) {
-        otherVoicesMs += durations[i] ?? 0;
+        otherVoicesMs += ms;
         return;
       }
       const cur = byId.get(l) ?? { totalMs: 0, segments: 0 };
-      cur.totalMs += durations[i] ?? 0;
+      cur.totalMs += ms;
       cur.segments += 1;
       byId.set(l, cur);
     });

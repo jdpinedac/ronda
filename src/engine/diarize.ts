@@ -12,7 +12,7 @@ import {
   CLUSTER_HEADROOM, OTHER_VOICE, DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
-import { decodeSegmentation, speechSpans, type Span } from './segmentation.js';
+import { decodeSegmentation, speechSpans, creditOverlap, type Span } from './segmentation.js';
 import { rms, selectForeground } from './levels.js';
 import { windowPlan } from './windows.js';
 
@@ -42,6 +42,8 @@ export interface Diagnostics {
   backgroundMs: number;
   /** Speech grouped into voices that are not participants. */
   otherVoicesMs: number;
+  /** Overlap credited to whoever held the floor when it began. */
+  overlapCreditedMs: number;
   embeddings: number;
   speechMs: number;
   longestSpanMs: number;
@@ -77,7 +79,7 @@ export interface DiarizationResult {
   speakers: SpeakerResult[];
   /** Every labelled speech span, in time order. */
   spans: { startMs: number; endMs: number; speaker: number }[];
-  /** Spans where the model heard more than one voice at once. */
+  /** Spans where the model heard more than one voice at once, credited or not. */
   overlapMs: number;
   silenceMs: number;
   totalMs: number;
@@ -213,16 +215,23 @@ export async function diarize(
     labels = absorbTinyClusters(vectors, labels, durations, { minSegments: 2, minDurationMs: 2000 });
   }
 
+  // --- credit overlap to whoever held the floor when it began ---
+  const attributedSpans = usable.slice(0, vectors.length);
+  const overlaps = allSpans.filter((s) => s.speakers.length > 1);
+  const credit = creditOverlap(attributedSpans, overlaps);
+  const overlapCreditedMs = credit.creditedMs.reduce((sum, ms, i) => sum + (labels[i] === OTHER_VOICE ? 0 : ms), 0);
+
   // --- tally ---
   const byId = new Map<number, { totalMs: number; segments: number }>();
   let otherVoicesMs = 0;
   labels.forEach((l, i) => {
+    const ms = (durations[i] ?? 0) + (credit.creditedMs[i] ?? 0);
     if (l === OTHER_VOICE) {
-      otherVoicesMs += durations[i] ?? 0;
+      otherVoicesMs += ms;
       return;
     }
     const cur = byId.get(l) ?? { totalMs: 0, segments: 0 };
-    cur.totalMs += durations[i] ?? 0;
+    cur.totalMs += ms;
     cur.segments += 1;
     byId.set(l, cur);
   });
@@ -242,9 +251,10 @@ export async function diarize(
   opts.onProgress?.(1, 'done');
   return {
     speakers,
-    spans: usable.slice(0, vectors.length)
-      .map((s, i) => ({ startMs: s.startMs, endMs: s.endMs, speaker: labels[i] ?? 0 }))
-      .filter((s) => s.speaker !== OTHER_VOICE),
+    spans: [
+      ...attributedSpans.map((s, i) => ({ startMs: s.startMs, endMs: s.endMs, speaker: labels[i] ?? 0 })),
+      ...overlaps.map((s, i) => ({ startMs: s.startMs, endMs: s.endMs, speaker: credit.ownerOf[i]! < 0 ? OTHER_VOICE : (labels[credit.ownerOf[i]!] ?? OTHER_VOICE) })),
+    ].filter((s) => s.speaker !== OTHER_VOICE).sort((a, b) => a.startMs - b.startMs),
     overlapMs,
     silenceMs,
     totalMs,
@@ -258,6 +268,7 @@ export async function diarize(
       spansInForeground: usable.length,
       backgroundMs,
       otherVoicesMs,
+      overlapCreditedMs,
       embeddings: vectors.length,
       speechMs,
       longestSpanMs,

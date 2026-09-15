@@ -85,3 +85,42 @@ export function speechSpans(spans: readonly Span[], minDurationMs: number): Span
     .filter((s) => s.speakers.length === 1 && s.endMs - s.startMs >= minDurationMs)
     .map((s) => ({ startMs: s.startMs, endMs: s.endMs, speakers: [...s.speakers] }));
 }
+
+export interface OverlapCredit {
+  /** Extra milliseconds credited to each attributed span, by index. */
+  creditedMs: number[];
+  /** Overlap with no attributed span before it. */
+  unattributedMs: number;
+  /** For each overlap span, the index of the attributed span it was credited to, or -1. */
+  ownerOf: number[];
+}
+
+/**
+ * Credits each overlap span to the attributed span that ended most recently
+ * before it: whoever held the floor when the second voice came in.
+ *
+ * An embedding of two mixed voices belongs to neither, so overlap cannot be
+ * clustered. It can still be counted. Measured against human annotation on
+ * three whole meetings, crediting it to the speaker before beat every other
+ * rule tried — the speaker after, the nearer of the two, splitting it — and
+ * beat leaving it out by a wide margin: DER 0.306 → 0.244, 0.367 → 0.280 and
+ * 0.207 → 0.111. Part of that is the convention that scores overlap as the
+ * longer-running turn, but the reading is also the natural one: the person
+ * already speaking is still speaking. See ADR 0006.
+ *
+ * Both lists must be in time order. Attributed spans never intersect overlap
+ * spans, because both come from the same tiling of the timeline.
+ */
+export function creditOverlap(attributed: readonly Span[], overlaps: readonly Span[]): OverlapCredit {
+  const creditedMs = attributed.map(() => 0);
+  const ownerOf: number[] = [];
+  let unattributedMs = 0;
+  let j = 0;
+  for (const o of overlaps) {
+    while (j < attributed.length && attributed[j]!.endMs <= o.startMs + 1) j++;
+    const ms = o.endMs - o.startMs;
+    if (j === 0) { unattributedMs += ms; ownerOf.push(-1); }
+    else { creditedMs[j - 1] = creditedMs[j - 1]! + ms; ownerOf.push(j - 1); }
+  }
+  return { creditedMs, unattributedMs, ownerOf };
+}
