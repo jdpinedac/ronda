@@ -49,5 +49,27 @@ test('live rows keep their colour and name while shares move', async ({ page }) 
     }
   }
   expect(samples[samples.length - 1]![0]!.name).toBe('Ana');
+
+  // Stop is a pause: the tally stays, and the choice is resume or reset.
   await page.locator('#toggle').click();
+  await expect(page.locator('#toggle')).toHaveText(/Reanudar|Resume/);
+  await expect(page.locator('#reset')).toBeVisible();
+  const keptRows = await page.locator('#legend li').count();
+  expect(keptRows).toBeGreaterThanOrEqual(2);
+  const keptTime = await page.locator('#center-time').textContent();
+
+  await page.locator('#toggle').click();
+  await expect(page.locator('#toggle')).toHaveText(/Detener|Stop/);
+  await expect(page.locator('#reset')).toBeHidden();
+  await page.waitForTimeout(6_000);
+  await page.locator('#toggle').click();
+  await expect(page.locator('#toggle')).toHaveText(/Reanudar|Resume/);
+  expect(toSeconds((await page.locator('#center-time').textContent())!)).toBeGreaterThanOrEqual(toSeconds(keptTime!));
+  expect(await page.locator('#legend li').count()).toBeGreaterThanOrEqual(keptRows);
+
+  await page.locator('#reset').click();
+  await expect(page.locator('#toggle')).toHaveText(/Escuchar|Listen/);
+  await expect(page.locator('#legend li')).toHaveCount(0);
+  await expect(page.locator('#center-time')).toHaveText('0:00');
+  await expect(page.locator('#count')).toBeEnabled();
 });

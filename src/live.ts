@@ -27,6 +27,7 @@ if (footer) mountPrefs(footer, locale);
 const PALETTE = ['#B8552E', '#2F6B5E', '#C9932B', '#41497C', '#8C4067', '#5C6B32', '#3C7A99', '#9C3D3D'];
 
 const toggle = $('toggle') as HTMLButtonElement | null;
+const resetButton = $('reset') as HTMLButtonElement | null;
 const namesInput = $('names') as HTMLInputElement | null;
 const countInput = $('count') as HTMLInputElement | null;
 
@@ -84,6 +85,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 setText('toggle', t('listen'));
+setText('reset', t('reset'));
 refreshReady();
 
 function formatTime(ms: number): string {
@@ -184,10 +186,15 @@ function render(state: LiveState) {
   }
 }
 
+/**
+ * Listen, or resume. Stopping pauses: the session and its tally survive, and
+ * pressing the button again adds to the same conversation. Reset starts over.
+ */
 async function start() {
   const err = $('error');
   if (err) err.hidden = true;
   if (toggle) { toggle.disabled = true; }
+  if (resetButton) resetButton.disabled = true;
   setText('badge-text', t('preparing'));
   setText('hint', t('loadingModels'));
 
@@ -195,7 +202,7 @@ async function start() {
     await loadModels();
   } catch {
     showError(t('analyseFailed'));
-    refreshReady();
+    afterStopControls();
     return;
   }
 
@@ -214,23 +221,26 @@ async function start() {
     }
   } catch {
     showError(t('micDenied'));
-    setText('badge-text', t('waiting'));
-    setText('hint', t('tellTheTable'));
-    refreshReady();
+    setText('badge-text', session ? t('paused') : t('waiting'));
+    setText('hint', session ? t('pausedHint') : t('tellTheTable'));
+    afterStopControls();
     return;
   }
 
-  const count = headCount();
-  const bgVoices = ($('bg-voices') as HTMLInputElement | null)?.checked ?? false;
-  session = await startLiveSession({
-    names: typedNames(),
-    ...(count !== null ? { speakerCount: count } : {}),
-    backgroundVoices: bgVoices,
-  });
-  session.onUpdate(render);
+  if (!session) {
+    const count = headCount();
+    const bgVoices = ($('bg-voices') as HTMLInputElement | null)?.checked ?? false;
+    session = await startLiveSession({
+      names: typedNames(),
+      ...(count !== null ? { speakerCount: count } : {}),
+      backgroundVoices: bgVoices,
+    });
+    session.onUpdate(render);
+  }
   capture.onAudio((samples) => session?.push(samples));
 
   running = true;
+  if (resetButton) resetButton.hidden = true;
   if (namesInput) namesInput.disabled = true;
   if (countInput) countInput.disabled = true;
   setText('toggle', t('stop'));
@@ -262,14 +272,41 @@ async function stop() {
   const state = session?.state();
   if (state) render(state);
 
-  setText('toggle', t('listen'));
   toggle?.classList.remove('stopping');
   $('badge')?.classList.remove('on');
-  setText('badge-text', t('waiting'));
-  setText('hint', t('tellTheTable'));
-  if (namesInput) namesInput.disabled = false;
-  if (countInput) countInput.disabled = false;
+  setText('badge-text', t('paused'));
+  setText('hint', t('pausedHint'));
+  afterStopControls();
+}
+
+/** Buttons for a paused session, or for none. */
+function afterStopControls() {
+  const paused = session !== null;
+  setText('toggle', paused ? t('resume') : t('listen'));
+  if (resetButton) { resetButton.hidden = !paused; resetButton.disabled = false; }
+  if (namesInput) namesInput.disabled = paused;
+  if (countInput) countInput.disabled = paused;
   refreshReady();
 }
 
+/** Forget the conversation and start clean. */
+function reset() {
+  session?.dispose();
+  session = null;
+  const segments = $('segments');
+  const legend = $('legend');
+  if (segments) segments.innerHTML = '';
+  if (legend) legend.innerHTML = '';
+  setText('center-time', '0:00');
+  setText('center-elapsed', '');
+  const warn = $('warning');
+  if (warn) warn.hidden = true;
+  const diagWrap = $('diagnostics-wrap');
+  if (diagWrap) diagWrap.hidden = true;
+  setText('badge-text', t('waiting'));
+  setText('hint', t('tellTheTable'));
+  afterStopControls();
+}
+
 toggle?.addEventListener('click', () => { void (running ? stop() : start()); });
+resetButton?.addEventListener('click', reset);

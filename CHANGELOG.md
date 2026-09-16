@@ -11,6 +11,9 @@ has survived real tables, versions carry an `-rc.N` suffix.
   English) and theme (light, dark, or follow the system). Both are remembered
   by the browser; they are the only thing Ronda stores.
 
+- Stopping the live mode is a pause. The tally stays on screen, Resume keeps
+  adding to the same conversation with the same people, and Reset starts over.
+
 ### Fixed
 - "Technical details" is translated.
 

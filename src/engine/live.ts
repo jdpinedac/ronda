@@ -63,7 +63,11 @@ export interface LiveState {
 export interface LiveSession {
   /** Feed one second of 16 kHz mono audio. */
   push: (samples: Float32Array) => void;
-  /** Analyse whatever is buffered, even if short. Call when stopping. */
+  /**
+   * Analyse whatever is buffered, even if short, and get ready to continue.
+   * Call when the user stops listening: the tally stays, and audio pushed
+   * afterwards adds to it, as a new stretch of the same conversation.
+   */
   flush: () => Promise<void>;
   state: () => LiveState;
   onUpdate: (handler: (state: LiveState) => void) => void;
@@ -95,8 +99,10 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
   let nextWindowStartMs = 0;
   /** End of the last trusted region; the tail window at flush starts from here. */
   let trustedToMs = 0;
+  /** Where the current stretch of listening began; its first window is trusted from its start. */
+  let stretchStartMs = 0;
   let analysing = false;
-  let flushed = false;
+  let disposed = false;
 
   const vectors: Float32Array[] = [];
   const durations: number[] = [];
@@ -201,14 +207,14 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
 
   /** Every window whose audio is complete, in order; then drop what no later window needs. */
   async function pump() {
-    if (analysing || flushed) return;
+    if (analysing || disposed) return;
     analysing = true;
     try {
       while (bufferedToMs() >= nextWindowStartMs + WINDOW_MS) {
         const startMs = nextWindowStartMs;
         // The boundary between two windows is the midpoint of the stretch they
         // both cover, as in windows.ts: 2.5 s in from each edge.
-        const trustFromMs = startMs === 0 ? 0 : startMs + (WINDOW_MS - HOP_MS) / 2;
+        const trustFromMs = startMs === stretchStartMs ? startMs : startMs + (WINDOW_MS - HOP_MS) / 2;
         const trustToMs = startMs + WINDOW_MS - (WINDOW_MS - HOP_MS) / 2;
         await analyse(startMs, startMs + WINDOW_MS, trustFromMs, trustToMs);
         nextWindowStartMs += HOP_MS;
@@ -229,7 +235,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
   async function flushTail() {
     while (analysing) await new Promise((r) => setTimeout(r, 10));
     const endMs = bufferedToMs();
-    if (endMs - trustedToMs < 1000 && trustedToMs > 0) return;
+    if (endMs - trustedToMs < 1000 && trustedToMs > stretchStartMs) return;
     if (endMs - bufferStartMs < 1000) return;
     analysing = true;
     try {
@@ -282,7 +288,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
 
   return {
     push: (samples) => {
-      if (flushed) return;
+      if (disposed) return;
       const joined = new Float32Array(buffer.length + samples.length);
       joined.set(buffer, 0);
       joined.set(samples, buffer.length);
@@ -293,11 +299,16 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     flush: async () => {
       await pump();
       await flushTail();
-      flushed = true;
+      // A pause. Whatever comes next starts a new stretch at this point in
+      // the conversation's clock; samples, identities and credit carry on.
       buffer = new Float32Array(0);
+      bufferStartMs = elapsedMs;
+      nextWindowStartMs = elapsedMs;
+      trustedToMs = elapsedMs;
+      stretchStartMs = elapsedMs;
     },
     state,
     onUpdate: (h) => { handlers.push(h); },
-    dispose: () => { buffer = new Float32Array(0); handlers.length = 0; flushed = true; },
+    dispose: () => { buffer = new Float32Array(0); handlers.length = 0; disposed = true; },
   };
 }
