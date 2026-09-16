@@ -4,7 +4,9 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
-## [Unreleased]
+## [0.1.0-rc.7] — 2026-09-16
+
+Seventh candidate. Ronda says when the voices arrive muddled, and what to do.
 
 ### Added
 - The live page measures how clearly the voices arrive — the spread of each
@@ -142,6 +144,7 @@ First version published for people to try. Not a production release.
   under-credited.
 - Not yet tried on a phone at a real table by anyone other than the authors.
 
+[0.1.0-rc.7]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.7
 [0.1.0-rc.6]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.6
 [0.1.0-rc.5]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.5
 [0.1.0-rc.4]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.4
