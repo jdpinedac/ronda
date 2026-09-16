@@ -1,0 +1,5 @@
+# The Phase 0 spike is throwaway code kept only so ADR 0001's numbers can be
+# reproduced; it does not ship and is not maintained. Everything else is
+# analysed, including the build scripts and the vendored service worker.
+paths-ignore:
+  - spike
