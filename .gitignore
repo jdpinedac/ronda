@@ -20,3 +20,6 @@ bench/out/
 # Playwright
 test-results/
 playwright-report/
+
+# Field diagnostics from real sessions: embeddings and timing of real people, never committed
+diagnostics/
