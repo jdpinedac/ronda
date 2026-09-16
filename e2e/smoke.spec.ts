@@ -15,10 +15,14 @@ test('analysing the bundled example yields four speakers', async ({ page }) => {
   await expect(page.locator('#filename')).toHaveText('meeting.wav');
   await expect(page.locator('#count')).toHaveValue('4');
   await expect(analyse).toBeEnabled();
+  // A name is text, whatever it contains.
+  await page.locator('#names').fill('<b>Ana</b>, Juan, Marta, Pedro');
 
   await analyse.click();
   await expect(page.locator('#results')).toBeVisible({ timeout: 200_000 });
   await expect(page.locator('#legend li')).toHaveCount(4);
+  await expect(page.locator('#legend li .name').first()).toHaveText('<b>Ana</b>');
+  expect(await page.locator('#legend b').count()).toBe(0);
   await expect(page.locator('#count-note')).toContainText(/head count|número de personas/);
   await expect(page.locator('#error')).toBeHidden();
 

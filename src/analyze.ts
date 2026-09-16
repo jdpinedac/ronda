@@ -156,14 +156,19 @@ function render(result: DiarizationResult) {
   const typed = typedNames();
   legend.innerHTML = '';
   speakers.forEach((sp, i) => {
+    const name = typed[i] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${i + 1}`;
     const li = document.createElement('li');
     li.className = 'legend-row';
-    const name = typed[i] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${i + 1}`;
-    li.innerHTML =
-      `<span class="dot" style="background:${PALETTE[i % PALETTE.length]}"></span>` +
-      `<span class="name">${name}</span><span class="leader"></span>` +
-      `<span class="stat">${formatTime(sp.totalMs)}</span>` +
-      `<span class="pct">${Math.round(sp.share * 100)}%</span>`;
+    // Text nodes, not markup: the name is whatever the user typed.
+    const cell = (cls: string, text = '') => {
+      const span = document.createElement('span');
+      span.className = cls;
+      span.textContent = text;
+      return span;
+    };
+    const dot = cell('dot');
+    dot.style.background = PALETTE[i % PALETTE.length]!;
+    li.append(dot, cell('name', name), cell('leader'), cell('stat', formatTime(sp.totalMs)), cell('pct', `${Math.round(sp.share * 100)}%`));
     legend.appendChild(li);
   });
 

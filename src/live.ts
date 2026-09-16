@@ -91,6 +91,22 @@ function showError(msg: string) {
   if (el) { el.textContent = msg; el.hidden = false; }
 }
 
+/** A legend row built from text nodes: the name is whatever the user typed. */
+function legendRow(className: string, colour: string, name: string, stat: string, pct: string): HTMLLIElement {
+  const li = document.createElement('li');
+  li.className = className;
+  const cell = (cls: string, text = '') => {
+    const span = document.createElement('span');
+    span.className = cls;
+    span.textContent = text;
+    return span;
+  };
+  const dot = cell('dot');
+  dot.style.background = colour;
+  li.append(dot, cell('name', name), cell('leader'), cell('stat', stat), cell('pct', pct));
+  return li;
+}
+
 function render(state: LiveState) {
   const segments = $('segments');
   const legend = $('legend');
@@ -121,15 +137,9 @@ function render(state: LiveState) {
   const typed = typedNames();
   legend.innerHTML = '';
   state.speakers.forEach((sp) => {
-    const li = document.createElement('li');
-    li.className = sp.active ? 'legend-row active' : 'legend-row';
     const name = typed[sp.id] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${sp.id + 1}`;
-    li.innerHTML =
-      `<span class="dot" style="background:${PALETTE[sp.id % PALETTE.length]}"></span>` +
-      `<span class="name">${name}</span><span class="leader"></span>` +
-      `<span class="stat">${formatTime(sp.totalMs)}</span>` +
-      `<span class="pct">${Math.round(sp.share * 100)}%</span>`;
-    legend.appendChild(li);
+    legend.appendChild(legendRow(sp.active ? 'legend-row active' : 'legend-row',
+      PALETTE[sp.id % PALETTE.length]!, name, formatTime(sp.totalMs), `${Math.round(sp.share * 100)}%`));
   });
 
   const active = state.speakers.find((s) => s.active);
