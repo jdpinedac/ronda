@@ -7,6 +7,11 @@ has survived real tables, versions carry an `-rc.N` suffix.
 ## [Unreleased]
 
 ### Added
+- The benchmark reports the share error: how much of the floor is credited to
+  the wrong person, against annotated shares that count overlap for everyone
+  speaking. Crediting overlap to both voices was built and measured with it,
+  moved the shares by at most 1.4 points either way, and was not adopted
+  (ADR 0009). The fake models used in tests can now produce overlap.
 - The live state says how far into the audio its verdict reaches. A benchmark
   report scores "who is speaking now" against annotation: accuracy, switch
   latency and false flips. A fast path for the indicator and two alternative
