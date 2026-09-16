@@ -57,6 +57,17 @@ problem is: TS3003a shows 58% for a person who spoke 83% of the time. That is no
 overlap; it is the dominant speaker's short segments landing near other people
 (ADR 0005), and it is worth twenty-four points where overlap was worth one.
 
+**Also measured, also not adopted: temporal smoothing.** A field report described a
+person who talked a lot being shown as someone else while they spoke. Smoothing the
+assignments over time — Viterbi over the sequence of samples, each costing its distance
+to a group's centroid plus a penalty for every change of speaker, decaying with the gap
+between samples — is the classic answer, and it had not been tried. On the stored
+embeddings (`bench/smooth.report.ts`) it gained 0.004–0.016 of DER on three recordings
+and lost 0.03 on TS3003a, the one that matches the report, taking its share error from
+24% to 27%: where the dominant speaker's samples already sit near other centroids,
+smoothing moves them there more consistently, not less. The fix for that case needs the
+case itself, which is what the diagnostics export is for.
+
 For the incremental redesign considered in ADR 0008, this sets the expectation for its
 overlap half: whatever the clustering does, crediting the second voice is capped by how
 much overlap the segmentation model hears and by how reliably a short stretch can be
