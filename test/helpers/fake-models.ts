@@ -47,8 +47,8 @@ function goertzel(x: Float32Array, offset: number, hz: number): number {
   const k = Math.round((FRAME * hz) / SAMPLE_RATE);
   const w = (2 * Math.PI * k) / FRAME;
   const coeff = 2 * Math.cos(w);
-  let s0 = 0, s1 = 0, s2 = 0;
-  for (let i = 0; i < FRAME; i++) { s0 = x[offset + i]! + coeff * s1 - s2; s2 = s1; s1 = s0; }
+  let s1 = 0, s2 = 0;
+  for (let i = 0; i < FRAME; i++) { const s0 = x[offset + i]! + coeff * s1 - s2; s2 = s1; s1 = s0; }
   return (s1 * s1 + s2 * s2 - coeff * s1 * s2) / (FRAME * FRAME);
 }
 /** A tone of amplitude a gives about a²/4 here: 0.008–0.02 at the normal level, 0.0003 at a fifth of it; leakage is far less. */
