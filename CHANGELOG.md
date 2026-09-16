@@ -4,7 +4,10 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
-## [Unreleased]
+## [0.1.0-rc.6] — 2026-09-16
+
+Sixth candidate. A session Ronda got wrong can now be handed over without its
+audio.
 
 ### Added
 - "Export diagnostics" on the live page, after stopping: a file with the
@@ -16,6 +19,10 @@ has survived real tables, versions carry an `-rc.N` suffix.
   speaking. Crediting overlap to both voices was built and measured with it,
   moved the shares by at most 1.4 points either way, and was not adopted
   (ADR 0009). The fake models used in tests can now produce overlap.
+- Temporal smoothing of assignments (Viterbi with a switching penalty) was
+  measured on the stored embeddings: small gains on three recordings, worse
+  on the one where a dominant speaker is mistaken for others. Not adopted;
+  `bench/smooth.report.ts`.
 - The live state says how far into the audio its verdict reaches. A benchmark
   report scores "who is speaking now" against annotation: accuracy, switch
   latency and false flips. A fast path for the indicator and two alternative
@@ -120,6 +127,7 @@ First version published for people to try. Not a production release.
   under-credited.
 - Not yet tried on a phone at a real table by anyone other than the authors.
 
+[0.1.0-rc.6]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.6
 [0.1.0-rc.5]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.5
 [0.1.0-rc.4]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.4
 [0.1.0-rc.3]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.3
