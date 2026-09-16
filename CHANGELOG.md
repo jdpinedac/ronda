@@ -7,6 +7,12 @@ has survived real tables, versions carry an `-rc.N` suffix.
 ## [Unreleased]
 
 ### Changed
+- The live path now analyses the same sliding window as the file path — 10 s
+  every 5 s, trusting only the middle of each — instead of disjoint 10 s
+  blocks. On the same audio both paths give the same shares; before, the live
+  path lost the model's least reliable seconds at every block edge and could
+  show a different speaker count. Results still arrive every 5 s, covering
+  audio up to 2.5 s ago.
 - Clustering computes pairwise distances once and updates them on each merge
   (Lance–Williams, average linkage). Same labels, verified on every stored
   embedding set; a whole meeting clusters in under 100 ms instead of 8 s, which
