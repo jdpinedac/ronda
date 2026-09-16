@@ -40,6 +40,12 @@ describe('the live path agrees with the file path', () => {
     for (let i = 0; i < fileTotals.length; i++) expect(Math.abs(liveTotals[i]! - fileTotals[i]!), `speaker ${i}: live ${liveTotals[i]} vs file ${fileTotals[i]}`).toBeLessThanOrEqual(20);
   });
 
+  it('says how far into the audio its verdict reaches', async () => {
+    const state = await live(CONVERSATION, 2);
+    // After flush the whole recording has been analysed.
+    expect(state.coveredToMs).toBe(CONVERSATION.length / 16);
+  });
+
   it('takes the same voice samples, give or take the one split at stop', async () => {
     // When listening stops, the last 2.5 s are analysed on their own, so a
     // turn still running at that moment yields two samples where the file

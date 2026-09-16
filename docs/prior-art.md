@@ -55,3 +55,35 @@ nothing installed; audio discarded within seconds; no speech recognition anywher
 an error rate published alongside the limitations.
 
 The gap is the crossing, not any one of the pieces.
+
+## Low-latency and overlap-aware diarization
+
+Date: 2026-09-16. Prompted by two field observations — the "who is speaking now"
+indicator lags and flips — and by the measurement in ADR 0005 that three embedding
+models share the same accuracy floor, so a better embedding is not the lever. A bounded
+survey of what would be; primary sources linked, figures as stated by them.
+
+| Approach | Year | Size | Licence | ONNX | Latency | DER | Fit for a browser |
+|---|---|---|---|---|---|---|---|
+| [Diart](https://github.com/juanmc2005/diart) — pyannote segmentation + embeddings, incremental centroid clustering ([paper](https://arxiv.org/abs/2109.06483)) | 2021, maintained | the two models Ronda ships | MIT | yes | 0.5–5 s, tunable | AMI 27.5% at 5 s, 30.4% at 1 s | **High**: same models, only the clustering and buffering differ |
+| [pyannote community-1](https://huggingface.co/pyannote/speaker-diarization-community-1) | 2025 | not stated | CC-BY-4.0, gated | not stated | offline | AMI 17.0% | Medium: offline, but adds an "exclusive" one-speaker-at-a-time stream |
+| [Streaming Sortformer](https://huggingface.co/nvidia/diar_streaming_sortformer_4spk-v2.1) | 2025 | 117 M params | NVIDIA Open Model | no, export broken | ~1 s | AMI 16.7% | **Low**: size, four speakers max, no export |
+| [LS-EEND](https://arxiv.org/abs/2410.06670) — frame-in frame-out online EEND | 2024–25 | not stated | not stated | no | 1.07 s; CPU RTF 0.028 | AMI 20.8% | Medium: promising numbers, nothing exportable yet |
+| [DiaPer](https://arxiv.org/abs/2312.04324) | 2023–24 | 4.6 M params | paper CC-BY-SA | no | offline | AMI array 37.5% | Medium: tiny but offline and worse than today |
+| TS-VAD family ([PET-TSVAD](https://arxiv.org/abs/2309.12521), Seq2Seq-TSVAD) | 2022–23 | 12 M (PET) | not stated | no | offline | not stated | Low: no public weights found |
+| [sherpa-onnx WASM](https://k2-fsa.github.io/sherpa/onnx/speaker-diarization/index.html) | 2024–25 | 8 + 28 MB | Apache-2.0 | yes | offline | not stated | Runs in a browser already, offline only |
+
+No project was found doing streaming diarization client-side; the browser examples are
+offline or segmentation-only.
+
+**What follows for Ronda.** The reusable idea is Diart's, and it needs no new model:
+slide the segmentation window often, match each local speaker to a global centroid,
+update a centroid only after enough new speech from that speaker, create one only
+past a distance, and weight embedding frames by how exclusively one speaker holds
+them. The first half of that is what the fast path in `live.ts` now does for the
+indicator; the frame weighting is the candidate for crediting overlap to both voices
+rather than to the floor holder (ADR 0006). LS-EEND is the one end-to-end model worth
+a spike if its checkpoint can be exported; Sortformer and TS-VAD are not, for now.
+
+Not verified: Diart's DER below 1 s of latency, LS-EEND's parameter count and licence,
+model file sizes for pyannote community-1.

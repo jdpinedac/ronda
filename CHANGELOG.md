@@ -4,6 +4,15 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [Unreleased]
+
+### Added
+- The live state says how far into the audio its verdict reaches. A benchmark
+  report scores "who is speaking now" against annotation: accuracy, switch
+  latency and false flips. A fast path for the indicator and two alternative
+  rules were measured and did no better; ADR 0008 has the numbers, and
+  `docs/prior-art.md` a survey of low-latency diarization.
+
 ## [0.1.0-rc.5] — 2026-09-16
 
 Fifth candidate. Dark, bilingual, and a stop that is a pause.
