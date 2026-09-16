@@ -4,7 +4,9 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
-## [Unreleased]
+## [0.1.0-rc.4] — 2026-09-16
+
+Fourth candidate. People keep their place on screen.
 
 ### Changed
 - In the live mode a person keeps their colour, row and name for the whole
@@ -12,6 +14,10 @@ has survived real tables, versions carry an `-rc.N` suffix.
   so when one person overtook another their colours and names swapped.
   Identities are now carried across re-clusterings by the speech each group
   shares with the previous one. Both pages number people by who spoke first.
+
+### Fixed
+- Names typed by the user are shown as text on both pages; they were being
+  interpreted as markup. Found by CodeQL in CI.
 
 ## [0.1.0-rc.3] — 2026-09-16
 
@@ -81,6 +87,7 @@ First version published for people to try. Not a production release.
   under-credited.
 - Not yet tried on a phone at a real table by anyone other than the authors.
 
+[0.1.0-rc.4]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.4
 [0.1.0-rc.3]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.3
 [0.1.0-rc.2]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.2
 [0.1.0-rc.1]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.1
