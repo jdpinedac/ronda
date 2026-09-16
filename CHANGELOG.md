@@ -4,6 +4,21 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [Unreleased]
+
+### Added
+- The live page measures how clearly the voices arrive — the spread of each
+  person's samples — and warns when it is too high for moment-to-moment
+  attribution to be trusted, with what to do about it: move the phone. The
+  figure is in Technical details.
+- The diagnostics export records the browser and the audio processing the
+  device reported applying (noise suppression, gain control, echo cancellation,
+  sample rate), so a muddled session can be told apart from a muddled phone.
+
+### Changed
+- The "who is speaking" badge says *a moment ago*: its verdict is about audio a
+  few seconds old, and now reads that way.
+
 ## [0.1.0-rc.6] — 2026-09-16
 
 Sixth candidate. A session Ronda got wrong can now be handed over without its

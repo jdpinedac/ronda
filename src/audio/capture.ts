@@ -40,6 +40,8 @@ export interface Capture {
   onAudio: (handler: (samples: Float32Array) => void) => void;
   /** Current input level, 0..1, for the level meter. */
   level: () => number;
+  /** What the device says it is doing to the audio: noise suppression, gain control, sample rate… */
+  settings: () => Record<string, unknown>;
   stop: () => Promise<void>;
 }
 
@@ -103,6 +105,7 @@ export async function startCapture(): Promise<Capture> {
 
   return {
     onAudio: (handler) => { handlers.push(handler); },
+    settings: () => ({ ...(stream.getAudioTracks()[0]?.getSettings() ?? {}) }),
     level: () => {
       analyser.getFloatTimeDomainData(levelBuf);
       let sum = 0;
@@ -159,6 +162,7 @@ export async function startFakeCapture(audio: Float32Array): Promise<Capture> {
   };
   return {
     onAudio: (h) => { handlers.push(h); },
+    settings: () => ({ fake: true }),
     level: () => 0.5,
     stop: async () => { node.disconnect(); source.disconnect(); await ctx.close(); },
   };

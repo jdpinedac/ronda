@@ -27,6 +27,7 @@ describe('field diagnostics', () => {
     const V = b.vectors.map((v) => Float32Array.from(v));
     const n = V.length;
     const out = [`\n=== ${file}`,
+      ...(b.capture ? [`  capture: ${b.capture.userAgent ?? 'unknown browser'}; track ${JSON.stringify(b.capture.track ?? {})}`] : ['  capture: not recorded (exported before rc.7)']),
       `  ${b.format} from Ronda ${b.version}, exported ${b.exportedAt}`,
       `  head count ${b.speakerCount ?? 'none'}, television switch ${b.backgroundVoices ? 'on' : 'off'}, listened ${f1(b.elapsedMs / 60000)} min, ${n} voice samples, ${f1(b.backgroundMs / 1000)} s dropped as distant`];
 

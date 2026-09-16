@@ -383,6 +383,47 @@ export function carryIdentities(
   };
 }
 
+/**
+ * Above this spread, the voices are arriving too muddled for moment-to-moment
+ * attribution to be trusted. On the annotated table recordings each person's
+ * samples sit 0.19–0.55 from their own centroid (median); the one speaker
+ * measured at 0.79 was the one whose short samples landed on other people,
+ * and a field session at 0.68 and 0.79 had an unreliable "now" indicator.
+ */
+export const CLARITY_LIMIT = 0.6;
+/** Fewer samples than this for a person and their spread means nothing yet. */
+const MIN_FOR_CLARITY = 3;
+
+/**
+ * How clearly the voices arrive: for each person with enough samples, the
+ * median cosine distance of their samples to their own centroid, in centred
+ * space; the spread reported is the worst person's. Distance to the phone,
+ * reverberation, street noise and a phone's own audio processing all raise
+ * it, and all of them are things the people at the table can change.
+ */
+export function assessClarity(
+  centred: readonly Float32Array[],
+  identities: readonly number[],
+  durationsMs: readonly number[],
+): { spread: number; clear: boolean } {
+  const groups = new Map<number, number[]>();
+  identities.forEach((id, i) => {
+    if (id === OTHER_VOICE) return;
+    const g = groups.get(id);
+    if (g) g.push(i); else groups.set(id, [i]);
+  });
+  let spread = 0;
+  for (const idxs of groups.values()) {
+    if (idxs.length < MIN_FOR_CLARITY) continue;
+    const c = new Float32Array(centred[0]!.length);
+    for (const i of idxs) for (let d = 0; d < c.length; d++) c[d] = c[d]! + centred[i]![d]! * (durationsMs[i] ?? 0);
+    const centre = normalise(c);
+    const ds = idxs.map((i) => cosineDistance(centred[i]!, centre)).sort((a, b) => a - b);
+    spread = Math.max(spread, ds[Math.floor(ds.length / 2)]!);
+  }
+  return { spread, clear: spread <= CLARITY_LIMIT };
+}
+
 export type SpeakerCountSource = 'calibration' | 'count' | 'names' | 'automatic';
 
 export interface SpeakerCountHint {
