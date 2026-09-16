@@ -49,6 +49,31 @@ const RECORDINGS: { name: string; path: string; people: number; truth?: string }
 ];
 const filter = process.env.REC ?? '';
 const pct = (xs: number[]) => xs.map((x) => Math.round(x * 100)).join('/');
+
+/**
+ * Share error: how much of the floor is credited to the wrong person. Half
+ * the L1 distance between Ronda's shares and the annotated ones, after
+ * matching Ronda's speakers to annotated speakers the way DER does. The
+ * annotated shares count overlap for everyone speaking, which is what a
+ * table wants to know and what DER — one speaker per instant — cannot score.
+ */
+function shareError(truth: { turns: Turn[] }, speakers: { id: number; totalMs: number }[], mapping: Record<string, string>): { error: number; truthShares: string } {
+  const ref = new Map<string, number>();
+  for (const t of truth.turns) ref.set(String(t.speaker), (ref.get(String(t.speaker)) ?? 0) + t.endMs - t.startMs);
+  const refSum = [...ref.values()].reduce((a, b) => a + b, 0);
+  const hypSum = speakers.reduce((a, s) => a + s.totalMs, 0);
+  let l1 = 0;
+  const seen = new Set<string>();
+  for (const s of speakers) {
+    const who = mapping[String(s.id)];
+    const hypShare = hypSum > 0 ? s.totalMs / hypSum : 0;
+    const refShare = who !== undefined ? (ref.get(who) ?? 0) / refSum : 0;
+    if (who !== undefined) seen.add(who);
+    l1 += Math.abs(hypShare - refShare);
+  }
+  for (const [who, ms] of ref) if (!seen.has(who)) l1 += ms / refSum;
+  return { error: l1 / 2, truthShares: pct([...ref.values()].sort((a, b) => b - a).map((v) => v / refSum)) };
+}
 const sec = (ms: number) => (ms / 1000).toFixed(1);
 
 /** Which annotated speaker a span mostly belongs to; 'mixed' when two share it. */
@@ -98,7 +123,8 @@ describe('accuracy', () => {
         const bg = process.env.BENCH_BG === '1';
         const r = await diarize(audio, { speakerCount: rec.people, backgroundVoices: bg });
         const d = diarizationErrorRate(truth?.turns ?? [], r.spans, totalMs);
-        out.push(`[file, count=${rec.people}${bg ? ', tv on' : ''}]  speakers=${r.speakers.length}  shares=${pct(r.speakers.map((s) => s.share))}  DER=${d.der.toFixed(3)} miss=${sec(d.missedMs)} fa=${sec(d.falseAlarmMs)} conf=${sec(d.confusionMs)}  dropped-as-distant=${sec(r.diagnostics.backgroundMs)}s`);
+        const se = truth ? shareError(truth, r.speakers, d.mapping) : null;
+        out.push(`[file, count=${rec.people}${bg ? ', tv on' : ''}]  speakers=${r.speakers.length}  shares=${pct(r.speakers.map((s) => s.share))}${se ? ` (true ${se.truthShares}) share-error=${(100 * se.error).toFixed(1)}%` : ''}  DER=${d.der.toFixed(3)} miss=${sec(d.missedMs)} fa=${sec(d.falseAlarmMs)} conf=${sec(d.confusionMs)}  overlap heard=${sec(r.overlapMs)}s both=${sec(r.diagnostics.overlapBothMs)}s  dropped-as-distant=${sec(r.diagnostics.backgroundMs)}s`);
         console.log(out.join('\n'));
         return;
       }
@@ -117,7 +143,8 @@ describe('accuracy', () => {
       if (process.env.BENCH_DUMP === 'only') { console.log(out.join('\n')); return; }
 
       const counted = await diarize(audio, { speakerCount: rec.people });
-      out.push(`[file, count=${rec.people}]    speakers=${String(counted.speakers.length).padStart(2)}  shares=${pct(counted.speakers.map((s) => s.share))}${der(counted.spans)}  reliability=${counted.reliability}  dropped-as-distant=${sec(counted.diagnostics.backgroundMs)}s`);
+      const seCounted = truth ? shareError(truth, counted.speakers, diarizationErrorRate(truth.turns, counted.spans, totalMs).mapping) : null;
+      out.push(`[file, count=${rec.people}]    speakers=${String(counted.speakers.length).padStart(2)}  shares=${pct(counted.speakers.map((s) => s.share))}${seCounted ? ` (true ${seCounted.truthShares}) share-error=${(100 * seCounted.error).toFixed(1)}%` : ''}${der(counted.spans)}  reliability=${counted.reliability}  dropped-as-distant=${sec(counted.diagnostics.backgroundMs)}s`);
 
       const l0 = await live(audio, {});
       out.push(`[live, no count]   speakers=${String(l0.state.speakers.length).padStart(2)}  shares=${pct(l0.state.speakers.map((s) => s.share))}  over time: ${l0.history.join(',')}`);

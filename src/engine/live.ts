@@ -23,7 +23,7 @@ import {
 } from './clustering.js';
 import { rms, selectForeground } from './levels.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
-import { decodeSegmentation, speechSpans, creditOverlap, type Span } from './segmentation.js';
+import { decodeSegmentation, speechSpans, creditOverlap, overlapCredits, type Span, type OverlapInWindow } from './segmentation.js';
 import { assessReliability, type Reliability } from './diarize.js';
 
 /**
@@ -108,8 +108,30 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
 
   const vectors: Float32Array[] = [];
   const durations: number[] = [];
-  /** Overlap credited to each voice sample: whoever held the floor when it began. */
+  /** Overlap credited to each voice sample; see overlapCredits and creditOverlap. */
   const credited: number[] = [];
+  /** Every attributed span so far, for tying a window's local speakers to people by time. */
+  const attributedSoFar: { span: Span; vector: number }[] = [];
+  /**
+   * Overlaps whose local speakers were not all identified when their window
+   * was analysed: the stretch where the other person spoke alone may come
+   * after the overlap, in the next window. They get one more try then.
+   */
+  let pendingOverlaps: { o: OverlapInWindow; credited: number[]; fallback: number }[] = [];
+
+  const creditMs = (vector: number, ms: number) => { if (vector >= 0) credited[vector] = credited[vector]! + ms; };
+
+  /** Second try for last window's unresolved overlaps, now that this window's samples exist. */
+  function settlePending(final: boolean) {
+    for (const p of pendingOverlaps) {
+      const found = overlapCredits(attributedSoFar, [p.o])[0]!;
+      const ms = p.o.span.endMs - p.o.span.startMs;
+      for (const v of found) if (!p.credited.includes(v)) { creditMs(v, ms); p.credited.push(v); }
+      if (p.credited.length === 0) creditMs(p.fallback, ms);
+    }
+    pendingOverlaps = [];
+    void final;
+  }
   /** Levels of every stretch considered so far, for the background threshold. */
   const levels: number[] = [];
   let backgroundMs = 0;
@@ -143,7 +165,9 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
 
     const logits = await runSegmentation(segmentation, window);
     const spans: Span[] = [];
-    for (const s of decodeSegmentation(logits, SEGMENTATION_CLASSES, windowMs)) {
+    const decoded = decodeSegmentation(logits, SEGMENTATION_CLASSES, windowMs);
+    const wholeWindow: Span[] = decoded.map((s) => ({ startMs: s.startMs + windowStartMs, endMs: s.endMs + windowStartMs, speakers: s.speakers }));
+    for (const s of decoded) {
       const startMs = Math.max(s.startMs + windowStartMs, trustFromMs);
       const endMs = Math.min(s.endMs + windowStartMs, trustToMs);
       if (endMs > startMs) spans.push({ startMs, endMs, speakers: s.speakers });
@@ -182,12 +206,22 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       vectorOf.push(heard);
     }
 
-    // Overlap goes to whoever held the floor when it began; before the first
-    // voice of this window, that is the last voice of the previous one.
+    // Overlap goes to both voices when this window identified them, else to
+    // whoever held the floor when it began — before the first voice of this
+    // window, that is the last voice of the previous one.
     const overlaps = spans.filter((s) => s.speakers.length > 1);
+    // Samples from earlier windows count too: the stretch where a local
+    // speaker spoke alone may have been trusted, and embedded, by the previous one.
+    attributed.forEach((span, i) => attributedSoFar.push({ span, vector: vectorOf[i]! }));
+    settlePending(false);
+    const inWindow = overlaps.map((span) => ({ span, windowSpans: wholeWindow }));
+    const both = overlapCredits(attributedSoFar, inWindow);
     creditOverlap(attributed, overlaps).ownerOf.forEach((owner, oi) => {
-      const target = owner >= 0 ? vectorOf[owner]! : lastBefore;
-      if (target >= 0) credited[target] = credited[target]! + (overlaps[oi]!.endMs - overlaps[oi]!.startMs);
+      const ms = overlaps[oi]!.endMs - overlaps[oi]!.startMs;
+      const fallback = owner >= 0 ? vectorOf[owner]! : lastBefore;
+      const found = both[oi]!;
+      for (const v of found) creditMs(v, ms);
+      if (found.length < overlaps[oi]!.speakers.length) pendingOverlaps.push({ o: inWindow[oi]!, credited: [...found], fallback });
     });
 
     // Re-cluster everything heard so far, so earlier mistakes get corrected —
@@ -305,6 +339,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     flush: async () => {
       await pump();
       await flushTail();
+      settlePending(true);
       // A pause. Whatever comes next starts a new stretch at this point in
       // the conversation's clock; samples, identities and credit carry on.
       buffer = new Float32Array(0);

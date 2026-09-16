@@ -124,3 +124,51 @@ export function creditOverlap(attributed: readonly Span[], overlaps: readonly Sp
   }
   return { creditedMs, unattributedMs, ownerOf };
 }
+
+export interface AttributedSpan {
+  /** A single-speaker span that became a voice sample. */
+  span: Span;
+  /** Index of its voice sample, whose label or identity names the person. */
+  vector: number;
+}
+
+export interface OverlapInWindow {
+  span: Span;
+  /** Every span of the window the overlap came from, in absolute time, trusted or not. */
+  windowSpans: readonly Span[];
+}
+
+/**
+ * Which voice samples an overlap span should be credited to.
+ *
+ * Both people talking at once are both talking. The segmentation model names
+ * them as local speakers of the window, and the same window almost always
+ * holds a stretch where each spoke alone. That stretch may lie outside the
+ * part of the window that was trusted — the neighbouring window trusted it
+ * instead — so a local speaker is tied to a person by time: the attributed
+ * sample that most overlaps the stretches where that local speaker spoke
+ * alone, whichever window embedded it.
+ *
+ * Returns one list per overlap span, in order. An empty list means neither
+ * local speaker could be identified; callers fall back to whoever held the
+ * floor (creditOverlap). Measured in ADR 0009.
+ */
+export function overlapCredits(
+  attributed: readonly AttributedSpan[],
+  overlaps: readonly OverlapInWindow[],
+): number[][] {
+  const overlapMs = (a: Span, b: Span) => Math.max(0, Math.min(a.endMs, b.endMs) - Math.max(a.startMs, b.startMs));
+  return overlaps.map((o) => {
+    const out: number[] = [];
+    for (const local of o.span.speakers) {
+      const alone = o.windowSpans.filter((s) => s.speakers.length === 1 && s.speakers[0] === local);
+      let best = -1; let bestMs = 0;
+      for (const a of attributed) {
+        const ms = alone.reduce((sum, s) => sum + overlapMs(s, a.span), 0);
+        if (ms > bestMs) { bestMs = ms; best = a.vector; }
+      }
+      if (best >= 0 && !out.includes(best)) out.push(best);
+    }
+    return out;
+  });
+}

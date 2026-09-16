@@ -12,7 +12,7 @@ import {
   CLUSTER_HEADROOM, OTHER_VOICE, DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
-import { decodeSegmentation, speechSpans, creditOverlap, type Span } from './segmentation.js';
+import { decodeSegmentation, speechSpans, creditOverlap, overlapCredits, type Span } from './segmentation.js';
 import { rms, selectForeground } from './levels.js';
 import { windowPlan } from './windows.js';
 
@@ -42,8 +42,10 @@ export interface Diagnostics {
   backgroundMs: number;
   /** Speech grouped into voices that are not participants. */
   otherVoicesMs: number;
-  /** Overlap credited to whoever held the floor when it began. */
+  /** Overlap credited to someone, whether to both voices or to the floor holder. */
   overlapCreditedMs: number;
+  /** Overlap credited to both voices, because the window identified them. */
+  overlapBothMs: number;
   embeddings: number;
   speechMs: number;
   longestSpanMs: number;
@@ -117,19 +119,24 @@ export async function diarize(
   // --- segment ---
   const plan = windowPlan(totalMs, WINDOW_MS, HOP_MS);
   const allSpans: Span[] = [];
+  /** Which window each of allSpans came from, and each window's full span list in absolute time. */
+  const windowOf: number[] = [];
+  const windowSpans: Span[][] = [];
   for (let i = 0; i < plan.length; i++) {
     const w = plan[i]!;
     const chunk = audio.slice(msToSample(w.startMs), msToSample(w.endMs));
     const logits = await runSegmentation(segmentation, chunk);
     const local = decodeSegmentation(logits, SEGMENTATION_CLASSES, w.endMs - w.startMs);
+    windowSpans.push(local.map((s) => ({ startMs: s.startMs + w.startMs, endMs: s.endMs + w.startMs, speakers: s.speakers })));
     for (const s of local) {
       const startMs = Math.max(s.startMs + w.startMs, w.trustFromMs);
       const endMs = Math.min(s.endMs + w.startMs, w.trustToMs);
-      if (endMs > startMs) allSpans.push({ startMs, endMs, speakers: s.speakers });
+      if (endMs > startMs) { allSpans.push({ startMs, endMs, speakers: s.speakers }); windowOf.push(i); }
     }
     opts.onProgress?.((i + 1) / plan.length * 0.4, 'segmenting');
   }
-  allSpans.sort((a, b) => a.startMs - b.startMs);
+  // Windows are visited in time order and trust regions tile, so this is already sorted.
+  const windowIndex = new Map<Span, number>(allSpans.map((s, i) => [s, windowOf[i]!]));
 
   const overlapMs = allSpans.filter((s) => s.speakers.length > 1)
     .reduce((sum, s) => sum + (s.endMs - s.startMs), 0);
@@ -217,10 +224,24 @@ export async function diarize(
     labels = absorbTinyClusters(vectors, labels, durations, { minSegments: 2, minDurationMs: 2000 });
   }
 
-  // --- credit overlap to whoever held the floor when it began ---
+  // --- credit overlap: to both voices when the window identifies them, else to the floor holder ---
   const attributedSpans = usable.slice(0, vectors.length);
   const overlaps = allSpans.filter((s) => s.speakers.length > 1);
-  const credit = creditOverlap(attributedSpans, overlaps);
+  const floorHolder = creditOverlap(attributedSpans, overlaps);
+  const both = overlapCredits(
+    attributedSpans.map((span, vector) => ({ span, vector })),
+    overlaps.map((span) => ({ span, windowSpans: windowSpans[windowIndex.get(span)!]! })),
+  );
+  const credit = { creditedMs: attributedSpans.map(() => 0), ownerOf: [] as number[] };
+  let overlapBothMs = 0;
+  overlaps.forEach((o, i) => {
+    const ms = o.endMs - o.startMs;
+    const targets = both[i]!.length > 0 ? both[i]! : floorHolder.ownerOf[i]! >= 0 ? [floorHolder.ownerOf[i]!] : [];
+    for (const v of targets) credit.creditedMs[v] = credit.creditedMs[v]! + ms;
+    if (both[i]!.length > 1) overlapBothMs += ms;
+    // For the error-rate scorer, one speaker per instant: the floor holder.
+    credit.ownerOf.push(floorHolder.ownerOf[i]!);
+  });
   const overlapCreditedMs = credit.creditedMs.reduce((sum, ms, i) => sum + (labels[i] === OTHER_VOICE ? 0 : ms), 0);
 
   // --- tally ---
@@ -271,6 +292,7 @@ export async function diarize(
       backgroundMs,
       otherVoicesMs,
       overlapCreditedMs,
+      overlapBothMs,
       embeddings: vectors.length,
       speechMs,
       longestSpanMs,
