@@ -93,6 +93,22 @@ describe('agglomerative with a known speaker count', () => {
   });
 });
 
+describe('agglomerative at conversation scale', () => {
+  /**
+   * The live path re-clusters every voice sample heard so far after each
+   * 10-second block. An hour-long conversation is a few hundred samples, and
+   * a phone has one slow core, so this has to stay well under a block.
+   */
+  it('clusters 300 samples in under a second', () => {
+    const { vectors, truth } = makeVoices(4, 75, 0.15, 256);
+    const started = performance.now();
+    const labels = agglomerative(vectors, { k: 4 });
+    const elapsed = performance.now() - started;
+    expect(samePartition(labels, truth)).toBe(true);
+    expect(elapsed, `${elapsed.toFixed(0)} ms`).toBeLessThan(1000);
+  });
+});
+
 describe('agglomerative with a threshold', () => {
   it('finds the right count when voices are well separated', () => {
     const { vectors, truth } = makeVoices(3, 5, 0.1);
