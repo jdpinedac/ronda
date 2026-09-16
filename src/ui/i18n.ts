@@ -23,6 +23,12 @@ const STRINGS = {
   listen: { es: 'Escuchar', en: 'Listen' },
   stop: { es: 'Detener', en: 'Stop' },
   reset: { es: 'Reiniciar', en: 'Reset' },
+  resume: { es: 'Reanudar', en: 'Resume' },
+  paused: { es: 'En pausa', en: 'Paused' },
+  pausedHint: {
+    es: 'El reparto se conserva. Reanudar sigue sumando sobre la misma conversación; Reiniciar empieza de cero.',
+    en: 'The tally is kept. Resume keeps adding to the same conversation; Reset starts over.',
+  },
   waiting: { es: 'En espera', en: 'Waiting' },
   silence: { es: 'Silencio', en: 'Silence' },
   spokenTime: { es: 'tiempo hablado', en: 'time spoken' },
