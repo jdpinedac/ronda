@@ -12,11 +12,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "bench": "vitest run --config bench/vitest.config.mts",
     "bench:offline": "vitest run --config bench/vitest.config.mts bench/offline.report.ts",
     "lint": "eslint . && tsc --noEmit"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@vitest/coverage-v8": "^3.2.7",
     "eslint": "^9.17.0",
     "typescript": "^5.7.0",

@@ -18,5 +18,5 @@
     "noEmit": true,
     "resolveJsonModule": true
   },
-  "include": ["src", "test", "bench", "scripts", "vite.config.ts"]
+  "include": ["src", "test", "bench", "e2e", "scripts", "vite.config.ts", "playwright.config.ts"]
 }

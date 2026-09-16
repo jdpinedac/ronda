@@ -18,6 +18,12 @@ jobs:
       - run: npm run lint
       - run: npm run coverage
       - run: npm run build
+      # The built site, served like Pages serves it, analysing the bundled
+      # example in a real browser. See e2e/.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          CI: 'true'
       # onnxruntime-web is the only runtime dependency and should stay clean.
       # Dev-only advisories are reported but do not fail the build.
       - run: npm audit --omit=dev --audit-level=high
