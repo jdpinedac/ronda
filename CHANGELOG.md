@@ -7,6 +7,10 @@ has survived real tables, versions carry an `-rc.N` suffix.
 ## [Unreleased]
 
 ### Added
+- "Export diagnostics" on the live page, after stopping: a file with the
+  embedding, timing and assignment of every voice sample the session kept.
+  No audio, no names. `bench/field.report.ts` reads it and reproduces the
+  session, so a table Ronda got wrong can be studied without recording it.
 - The benchmark reports the share error: how much of the floor is credited to
   the wrong person, against annotated shares that count overlap for everyone
   speaking. Crediting overlap to both voices was built and measured with it,

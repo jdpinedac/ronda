@@ -67,6 +67,18 @@ test('live rows keep their colour and name while shares move', async ({ page }) 
   expect(toSeconds((await page.locator('#center-time').textContent())!)).toBeGreaterThanOrEqual(toSeconds(keptTime!));
   expect(await page.locator('#legend li').count()).toBeGreaterThanOrEqual(keptRows);
 
+  // Export what the session kept: embeddings and timing, never audio.
+  await expect(page.locator('#export')).toBeVisible();
+  const download = page.waitForEvent('download');
+  await page.locator('#export').click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/^ronda-diagnostics-.*\.json$/);
+  const bundle = JSON.parse((await (await file.createReadStream()).toArray()).join('')) as { format: string; vectors: number[][]; identities: number[]; spans: unknown[] };
+  expect(bundle.format).toBe('ronda-diagnostics/1');
+  expect(bundle.vectors.length).toBeGreaterThan(0);
+  expect(bundle.vectors.length).toBe(bundle.identities.length);
+  expect(JSON.stringify(bundle)).not.toContain('Ana');
+
   await page.locator('#reset').click();
   await expect(page.locator('#toggle')).toHaveText(/Escuchar|Listen/);
   await expect(page.locator('#legend li')).toHaveCount(0);

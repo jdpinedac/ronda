@@ -28,6 +28,7 @@ const PALETTE = ['#B8552E', '#2F6B5E', '#C9932B', '#41497C', '#8C4067', '#5C6B32
 
 const toggle = $('toggle') as HTMLButtonElement | null;
 const resetButton = $('reset') as HTMLButtonElement | null;
+const exportButton = $('export') as HTMLButtonElement | null;
 const namesInput = $('names') as HTMLInputElement | null;
 const countInput = $('count') as HTMLInputElement | null;
 
@@ -86,6 +87,8 @@ document.addEventListener('visibilitychange', () => {
 
 setText('toggle', t('listen'));
 setText('reset', t('reset'));
+setText('export', t('exportDiagnostics'));
+setText('export-hint', t('exportHint'));
 refreshReady();
 
 function formatTime(ms: number): string {
@@ -241,6 +244,8 @@ async function start() {
 
   running = true;
   if (resetButton) resetButton.hidden = true;
+  const exportWrap = $('export-wrap');
+  if (exportWrap) exportWrap.hidden = true;
   if (namesInput) namesInput.disabled = true;
   if (countInput) countInput.disabled = true;
   setText('toggle', t('stop'));
@@ -284,6 +289,8 @@ function afterStopControls() {
   const paused = session !== null;
   setText('toggle', paused ? t('resume') : t('listen'));
   if (resetButton) { resetButton.hidden = !paused; resetButton.disabled = false; }
+  const exportWrap = $('export-wrap');
+  if (exportWrap) exportWrap.hidden = !paused || (session?.state().samples ?? 0) === 0;
   if (namesInput) namesInput.disabled = paused;
   if (countInput) countInput.disabled = paused;
   refreshReady();
@@ -308,5 +315,24 @@ function reset() {
   afterStopControls();
 }
 
+/**
+ * Hands over what the session kept — embeddings, timing, assignments — as a
+ * file the benchmark can load. Never audio: there is none to hand over.
+ */
+function exportDiagnostics() {
+  if (!session) return;
+  const bundle = session.exportDiagnostics({ version: __RONDA_VERSION__ });
+  const blob = new Blob([JSON.stringify(bundle)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ronda-diagnostics-${bundle.exportedAt.slice(0, 19).replace(/[:T]/g, '-')}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 toggle?.addEventListener('click', () => { void (running ? stop() : start()); });
 resetButton?.addEventListener('click', reset);
+exportButton?.addEventListener('click', exportDiagnostics);
