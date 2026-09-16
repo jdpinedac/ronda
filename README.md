@@ -142,6 +142,7 @@ is not built for assessing individuals, and it would be bad at it.
     npm install
     npm run dev      # http://localhost:5173
     npm test
+    npm run coverage   # same tests, with a per-file coverage table
     npm run lint
     npm run build
     npm run bench          # real pipeline against real recordings; see bench/

@@ -37,5 +37,15 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],
+    // The whole-meeting tests cluster 227 real embeddings; under coverage
+    // instrumentation that takes a minute.
+    testTimeout: 180_000,
+    coverage: {
+      provider: 'v8',
+      // Everything that ships, including the page scripts nothing tests yet:
+      // the number should say what is not covered, not hide it.
+      include: ['src/**/*.ts'],
+      reporter: ['text', 'text-summary'],
+    },
   },
 });
