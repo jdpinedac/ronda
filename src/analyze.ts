@@ -1,8 +1,10 @@
 import { diarize, type DiarizationResult } from './engine/diarize.js';
 import { loadModels, SAMPLE_RATE } from './engine/models.js';
-import { resolveLocale, createTranslator } from './ui/i18n.js';
+import { createTranslator } from './ui/i18n.js';
+import { currentLocale, mountPrefs } from './ui/prefs.js';
 
-const t = createTranslator(resolveLocale(navigator.languages ?? [navigator.language]));
+const locale = currentLocale();
+const t = createTranslator(locale);
 const $ = (id: string) => document.getElementById(id);
 const setText = (id: string, v: string) => { const el = $(id); if (el) el.textContent = v; };
 
@@ -19,6 +21,9 @@ setText('go', t('analyse'));
 setText('results-title', t('results'));
 setText('center-label', t('spokenTime'));
 setText('version', `Ronda ${__RONDA_VERSION__}`);
+setText('diagnostics-title', t('technicalDetails'));
+const footer = document.getElementById('footer');
+if (footer) mountPrefs(footer, locale);
 
 const PALETTE = ['#B8552E', '#2F6B5E', '#C9932B', '#41497C', '#8C4067', '#5C6B32', '#3C7A99', '#9C3D3D'];
 

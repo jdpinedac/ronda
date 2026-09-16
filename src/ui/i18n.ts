@@ -119,6 +119,12 @@ const STRINGS = {
     es: 'No encontré suficientes fragmentos de voz claros para separar a las personas. Prueba con una grabación más larga, o con menos ruido de fondo.',
     en: 'I could not find enough clear speech to tell people apart. Try a longer recording, or one with less background noise.',
   },
+  technicalDetails: { es: 'Detalles técnicos', en: 'Technical details' },
+  language: { es: 'Idioma', en: 'Language' },
+  theme: { es: 'Tema', en: 'Theme' },
+  themeLight: { es: 'Claro', en: 'Light' },
+  themeDark: { es: 'Oscuro', en: 'Dark' },
+  themeAuto: { es: 'Automático', en: 'Auto' },
   unsupported: {
     es: 'Este navegador no puede ejecutar Ronda. Hace falta WebAssembly y acceso al micrófono.',
     en: 'This browser cannot run Ronda. WebAssembly and microphone access are required.',
@@ -134,6 +140,15 @@ export function resolveLocale(preferred: readonly string[]): Locale {
     if (base && (LOCALES as readonly string[]).includes(base)) return base as Locale;
   }
   return 'en';
+}
+
+/**
+ * The locale to use: what the user chose in the footer, if they chose one
+ * and it is still a language Ronda has; otherwise what the browser prefers.
+ */
+export function chooseLocale(stored: string | null | undefined, preferred: readonly string[]): Locale {
+  if (stored && (LOCALES as readonly string[]).includes(stored)) return stored as Locale;
+  return resolveLocale(preferred);
 }
 
 export function createTranslator(locale: Locale) {

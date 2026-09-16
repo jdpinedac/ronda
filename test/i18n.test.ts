@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveLocale, createTranslator, LOCALES } from '../src/ui/i18n.js';
+import { resolveLocale, chooseLocale, createTranslator, LOCALES } from '../src/ui/i18n.js';
 
 describe('resolveLocale', () => {
   it('picks the first supported language from the preference list', () => {
@@ -33,6 +33,26 @@ describe('createTranslator', () => {
     for (const locale of LOCALES) {
       const t = createTranslator(locale);
       for (const k of keys) expect(t(k), `${k} in ${locale}`).toBeTruthy();
+    }
+  });
+});
+
+describe('chooseLocale', () => {
+  it('honours a stored choice over the browser languages', () => {
+    expect(chooseLocale('en', ['es-CO'])).toBe('en');
+    expect(chooseLocale('es', ['en-US'])).toBe('es');
+  });
+
+  it('falls back to the browser languages when nothing valid is stored', () => {
+    expect(chooseLocale(null, ['es-CO', 'en'])).toBe('es');
+    expect(chooseLocale('fr', ['en-GB'])).toBe('en');
+    expect(chooseLocale('', ['ja'])).toBe('en');
+  });
+
+  it('has the switch labels in both languages', () => {
+    for (const locale of LOCALES) {
+      const t = createTranslator(locale);
+      for (const k of ['language', 'theme', 'themeLight', 'themeDark', 'themeAuto'] as const) expect(t(k)).toBeTruthy();
     }
   });
 });
