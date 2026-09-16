@@ -1,0 +1,18 @@
+# Keeps the one runtime dependency (onnxruntime-web), the dev tooling and the
+# GitHub Actions current. Minor and patch updates arrive as one grouped pull
+# request a week so they can be reviewed together; majors come on their own.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
