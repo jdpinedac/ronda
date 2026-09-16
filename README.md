@@ -23,6 +23,13 @@ sent anywhere. The entire pipeline, models included, runs inside the browser tab
 
 This is a property of the architecture, not a promise in a privacy policy.
 
+The one thing you can take out of a session, if you choose to, is a diagnostics file:
+the embedding of each stretch of speech, when it was heard, how long it lasted and who
+it was assigned to. No audio, no names. It exists so that when Ronda gets a table wrong,
+the session can be reproduced exactly in the benchmark and the mistake fixed. Export it
+from the live page after stopping, and analyse it with
+`FILE=… npm run bench -- bench/field.report.ts`.
+
 ## How it tells people apart
 
 Not by what they say — there is no speech recognition anywhere in Ronda.

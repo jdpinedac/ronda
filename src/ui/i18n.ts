@@ -24,6 +24,11 @@ const STRINGS = {
   stop: { es: 'Detener', en: 'Stop' },
   reset: { es: 'Reiniciar', en: 'Reset' },
   resume: { es: 'Reanudar', en: 'Resume' },
+  exportDiagnostics: { es: 'Exportar diagnóstico', en: 'Export diagnostics' },
+  exportHint: {
+    es: 'Descarga un archivo con la huella de timbre de cada fragmento de voz, sus tiempos y a quién se asignó. No contiene audio ni nombres, y sirve para reproducir esta sesión y corregir errores.',
+    en: 'Downloads a file with the timbre fingerprint of each stretch of speech, its timing and who it was assigned to. It holds no audio and no names, and lets this session be reproduced to fix mistakes.',
+  },
   paused: { es: 'En pausa', en: 'Paused' },
   pausedHint: {
     es: 'El reparto se conserva. Reanudar sigue sumando sobre la misma conversación; Reiniciar empieza de cero.',

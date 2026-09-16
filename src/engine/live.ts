@@ -62,6 +62,37 @@ export interface LiveState {
   otherVoicesMs: number;
 }
 
+/**
+ * What a session can hand over for diagnosis: everything it kept, which is
+ * everything except the audio. One embedding per voice sample — 256 numbers
+ * describing a timbre, from which speech cannot be reconstructed — with when
+ * it was heard, how long it lasted, and who it was assigned to. Enough to
+ * reproduce the session's clustering exactly in the benchmark. No names: the
+ * people are numbered as on screen.
+ */
+export interface DiagnosticsBundle {
+  format: 'ronda-diagnostics/1';
+  /** Ronda version that produced it. */
+  version: string;
+  exportedAt: string;
+  speakerCount: number | null;
+  backgroundVoices: boolean;
+  elapsedMs: number;
+  coveredToMs: number;
+  backgroundMs: number;
+  /** When each voice sample was heard. */
+  spans: { startMs: number; endMs: number }[];
+  durationsMs: number[];
+  /** Overlap credited to each sample. */
+  creditedMs: number[];
+  /** Level of each sample, for the background threshold. */
+  levels: number[];
+  /** The person each sample was assigned to, as numbered on screen; -1 for none. */
+  identities: number[];
+  /** Unit-length embeddings, rounded to four decimals. */
+  vectors: number[][];
+}
+
 export interface LiveSession {
   /** Feed one second of 16 kHz mono audio. */
   push: (samples: Float32Array) => void;
@@ -73,6 +104,8 @@ export interface LiveSession {
   flush: () => Promise<void>;
   state: () => LiveState;
   onUpdate: (handler: (state: LiveState) => void) => void;
+  /** Everything the session kept, for reproducing it offline. See DiagnosticsBundle. */
+  exportDiagnostics: (meta?: { version?: string }) => DiagnosticsBundle;
   dispose: () => void;
 }
 
@@ -108,6 +141,10 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
 
   const vectors: Float32Array[] = [];
   const durations: number[] = [];
+  /** When each voice sample was heard, in the conversation's clock. */
+  const sampleSpans: { startMs: number; endMs: number }[] = [];
+  /** Level of each voice sample that was kept. */
+  const sampleLevels: number[] = [];
   /** Overlap credited to each voice sample: whoever held the floor when it began. */
   const credited: number[] = [];
   /** Levels of every stretch considered so far, for the background threshold. */
@@ -176,6 +213,8 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       const raw = await runEmbedding(embedding, frames, frames.length / numBins, numBins);
       vectors.push(normalise(Float32Array.from(raw)));
       durations.push(s.endMs - s.startMs);
+      sampleSpans.push({ startMs: s.startMs, endMs: s.endMs });
+      sampleLevels.push(blockLevels[i]!);
       credited.push(0);
       heard = vectors.length - 1;
       attributed.push(s);
@@ -315,6 +354,22 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     },
     state,
     onUpdate: (h) => { handlers.push(h); },
+    exportDiagnostics: (meta = {}) => ({
+      format: 'ronda-diagnostics/1',
+      version: meta.version ?? 'dev',
+      exportedAt: new Date().toISOString(),
+      speakerCount: countHint.k,
+      backgroundVoices: opts.backgroundVoices ?? false,
+      elapsedMs,
+      coveredToMs: trustedToMs,
+      backgroundMs,
+      spans: sampleSpans.map((s) => ({ ...s })),
+      durationsMs: [...durations],
+      creditedMs: [...credited],
+      levels: [...sampleLevels],
+      identities: [...identities],
+      vectors: vectors.map((v) => Array.from(v, (x) => Math.round(x * 1e4) / 1e4)),
+    }),
     dispose: () => { buffer = new Float32Array(0); handlers.length = 0; disposed = true; },
   };
 }
