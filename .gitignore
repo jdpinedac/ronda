@@ -16,3 +16,7 @@ spike/altmodels/
 
 # Benchmark scratch output (embeddings dumped with BENCH_DUMP=1)
 bench/out/
+
+# Playwright
+test-results/
+playwright-report/
