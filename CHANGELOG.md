@@ -4,7 +4,10 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
-## [Unreleased]
+## [0.1.0-rc.2] — 2026-09-16
+
+Second candidate. Same measurement on the table as on a file, and a build
+that checks itself.
 
 ### Changed
 - The live path now analyses the same sliding window as the file path — 10 s
@@ -19,8 +22,13 @@ has survived real tables, versions carry an `-rc.N` suffix.
   the live path does after every block.
 
 ### Added
-- CI measures test coverage on every run, runs CodeQL, and Dependabot keeps
+- CI measures test coverage on every run, runs CodeQL, opens the built site in
+  a real browser and analyses the bundled example, and Dependabot keeps
   dependencies current. A unit test guards the whole-meeting error rate.
+
+### Fixed
+- Development tooling moved to vitest 5 and ESLint 10, clearing the two
+  moderate advisories `npm audit` reported.
 
 ## [0.1.0-rc.1] — 2026-09-15
 
@@ -52,4 +60,5 @@ First version published for people to try. Not a production release.
   under-credited.
 - Not yet tried on a phone at a real table by anyone other than the authors.
 
+[0.1.0-rc.2]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.2
 [0.1.0-rc.1]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.1
