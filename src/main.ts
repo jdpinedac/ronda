@@ -1,7 +1,9 @@
 import { detectCapabilities, isSupported } from './capabilities.js';
-import { resolveLocale, createTranslator } from './ui/i18n.js';
+import { createTranslator } from './ui/i18n.js';
+import { currentLocale, mountPrefs } from './ui/prefs.js';
 
-const t = createTranslator(resolveLocale(navigator.languages ?? [navigator.language]));
+const locale = currentLocale();
+const t = createTranslator(locale);
 
 const setText = (id: string, value: string) => {
   const el = document.getElementById(id);
@@ -18,6 +20,8 @@ setText('analyse-link', t('analyse'));
 setText('device-title', t('thisDevice'));
 setText('release', t('releaseNotice').replace('{version}', __RONDA_VERSION__));
 setText('version', `Ronda ${__RONDA_VERSION__}`);
+const footer = document.getElementById('footer');
+if (footer) mountPrefs(footer, locale);
 
 // Until the interface exists, the most useful thing this page can do is tell
 // someone whether the phone they want to put on the table is up to the job.

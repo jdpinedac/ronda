@@ -131,6 +131,13 @@ stored embeddings in seconds. Fetch the recordings with `spike/08-fetch-ami.py` 
 - It measures speaking time. It does not measure who contributed, who was listening,
   or who was right.
 
+## Language and theme
+
+The interface is in Spanish and English, light and dark. It follows the browser's
+language and the system's colour scheme unless you choose otherwise in the footer of
+any page; the choice is remembered by the browser, and it is the only thing Ronda
+stores.
+
 ## Please tell the table
 
 Ronda analyses the voices of everyone present. Even though nothing is recorded, being

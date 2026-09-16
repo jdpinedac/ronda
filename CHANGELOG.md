@@ -4,6 +4,16 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [Unreleased]
+
+### Added
+- A dark theme, and switches in every page's footer for language (Español,
+  English) and theme (light, dark, or follow the system). Both are remembered
+  by the browser; they are the only thing Ronda stores.
+
+### Fixed
+- "Technical details" is translated.
+
 ## [0.1.0-rc.4] — 2026-09-16
 
 Fourth candidate. People keep their place on screen.

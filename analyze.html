@@ -6,6 +6,19 @@
   <meta name="theme-color" content="#F2E8D6">
   <title>Ronda — analizar</title>
   <script src="./coi-serviceworker.js"></script>
+  <script>
+    // Paint the remembered theme before the first frame, so the page does not
+    // flash light before turning dark. src/ui/prefs.ts owns the logic.
+    (function () {
+      try {
+        var t = localStorage.getItem('ronda.theme');
+        var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m && dark) m.setAttribute('content', '#1C1712');
+      } catch (e) { /* no storage: stay light */ }
+    })();
+  </script>
   <link rel="stylesheet" href="/src/ui/styles.css">
 </head>
 <body>
@@ -63,12 +76,12 @@
       <p id="count-note" class="meta"></p>
 
       <details id="diagnostics-wrap" class="diag" hidden>
-        <summary>Technical details</summary>
+        <summary id="diagnostics-title">Technical details</summary>
         <div id="diagnostics"></div>
       </details>
     </section>
 
-    <footer><a href="./">← Ronda</a> · <span id="version"></span></footer>
+    <footer id="footer"><a href="./">← Ronda</a> · <span id="version"></span></footer>
   </main>
   <script type="module" src="/src/analyze.ts"></script>
 </body>

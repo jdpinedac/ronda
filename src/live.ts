@@ -1,9 +1,11 @@
 import { startCapture, startFakeCapture, type Capture } from './audio/capture.js';
 import { startLiveSession, type LiveSession, type LiveState } from './engine/live.js';
 import { loadModels } from './engine/models.js';
-import { resolveLocale, createTranslator } from './ui/i18n.js';
+import { createTranslator } from './ui/i18n.js';
+import { currentLocale, mountPrefs } from './ui/prefs.js';
 
-const t = createTranslator(resolveLocale(navigator.languages ?? [navigator.language]));
+const locale = currentLocale();
+const t = createTranslator(locale);
 const $ = (id: string) => document.getElementById(id);
 const setText = (id: string, v: string) => { const el = $(id); if (el) el.textContent = v; };
 
@@ -18,6 +20,9 @@ setText('center-label', t('spokenTime'));
 setText('badge-text', t('waiting'));
 setText('hint', t('tellTheTable'));
 setText('version', `Ronda ${__RONDA_VERSION__}`);
+setText('diagnostics-title', t('technicalDetails'));
+const footer = document.getElementById('footer');
+if (footer) mountPrefs(footer, locale);
 
 const PALETTE = ['#B8552E', '#2F6B5E', '#C9932B', '#41497C', '#8C4067', '#5C6B32', '#3C7A99', '#9C3D3D'];
 
