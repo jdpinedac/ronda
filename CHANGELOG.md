@@ -4,7 +4,10 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
-## [Unreleased]
+## [0.1.0-rc.3] — 2026-09-16
+
+Third candidate. Nothing is dropped for being quiet unless you say there is a
+television.
 
 ### Changed
 - Quiet speech is dropped as coming from outside the conversation only when
@@ -69,5 +72,6 @@ First version published for people to try. Not a production release.
   under-credited.
 - Not yet tried on a phone at a real table by anyone other than the authors.
 
+[0.1.0-rc.3]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.3
 [0.1.0-rc.2]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.2
 [0.1.0-rc.1]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.1
