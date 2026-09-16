@@ -8,7 +8,6 @@
 // substituted download fails the build instead of shipping.
 import { createHash } from 'node:crypto';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 
 const MODELS = [
   {
@@ -32,8 +31,10 @@ const digest = (buf) => createHash('sha256').update(buf).digest('hex');
 
 for (const m of MODELS) {
   const dest = new URL(m.name, dir);
-  if (existsSync(dest)) {
-    const have = await readFile(dest);
+  // Read rather than check-then-read: a file that vanishes in between is
+  // simply fetched.
+  const have = await readFile(dest).catch((err) => (err.code === 'ENOENT' ? null : Promise.reject(err)));
+  if (have !== null) {
     if (digest(have) === m.sha256) {
       console.log(`ok    ${m.name} (cached)`);
       continue;
