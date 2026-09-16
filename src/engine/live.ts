@@ -49,6 +49,8 @@ export interface LiveSpeaker {
 export interface LiveState {
   speakers: LiveSpeaker[];
   elapsedMs: number;
+  /** How far into the audio the verdict reaches; the rest is still being heard. */
+  coveredToMs: number;
   spokenMs: number;
   reliability: Reliability;
   countHint: SpeakerCountHint;
@@ -201,6 +203,9 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
         );
       ({ identities, nextId: nextIdentity } = carryIdentities(labels, identities, durations, nextIdentity));
     }
+    // Who holds the floor: the latest voice sample of the window. Two other
+    // rules and a separate fast path were measured against annotation and
+    // did no better; ADR 0008 has the numbers and where the limit really is.
     lastSpeaker = heard !== null ? (identities[heard] ?? null) : null;
     trustedToMs = Math.max(trustedToMs, trustToMs);
   }
@@ -275,6 +280,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     return {
       speakers,
       elapsedMs,
+      coveredToMs: trustedToMs,
       spokenMs,
       reliability: assessReliability(vectors.length, speakers.length),
       countHint,
