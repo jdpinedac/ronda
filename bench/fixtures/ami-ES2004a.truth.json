@@ -1,0 +1,1312 @@
+{
+ "meeting": "ES2004a",
+ "source": "AMI Corpus, single distant microphone (CC-BY-4.0)",
+ "speakers": [
+  "FEE013",
+  "FEE016",
+  "MEE014",
+  "MEO015"
+ ],
+ "turns": [
+  {
+   "startMs": 370,
+   "endMs": 1760,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 10990,
+   "endMs": 14530,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 17880,
+   "endMs": 18150,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 18870,
+   "endMs": 20290,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 22370,
+   "endMs": 23810,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 25150,
+   "endMs": 26830,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 25180,
+   "endMs": 25600,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 29120,
+   "endMs": 30480,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 29860,
+   "endMs": 31980,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 31300,
+   "endMs": 33390,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 34260,
+   "endMs": 34720,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 42630,
+   "endMs": 43290,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 49750,
+   "endMs": 53180,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 63810,
+   "endMs": 66330,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 71950,
+   "endMs": 72060,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 80490,
+   "endMs": 94620,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 80500,
+   "endMs": 81660,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 83220,
+   "endMs": 84030,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 95680,
+   "endMs": 115890,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 117620,
+   "endMs": 160950,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 162310,
+   "endMs": 167800,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 168790,
+   "endMs": 168880,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 170380,
+   "endMs": 185800,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 188280,
+   "endMs": 188430,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 188830,
+   "endMs": 192930,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 211460,
+   "endMs": 211970,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 243220,
+   "endMs": 244330,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 246930,
+   "endMs": 250600,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 252480,
+   "endMs": 252560,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 254530,
+   "endMs": 257240,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 255910,
+   "endMs": 256250,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 258310,
+   "endMs": 258640,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 259890,
+   "endMs": 262250,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 266180,
+   "endMs": 266970,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 268710,
+   "endMs": 269060,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 272310,
+   "endMs": 275800,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 275090,
+   "endMs": 275450,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 279180,
+   "endMs": 279750,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 285150,
+   "endMs": 286610,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 287570,
+   "endMs": 290100,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 289090,
+   "endMs": 296020,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 306380,
+   "endMs": 307200,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 309220,
+   "endMs": 310080,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 313470,
+   "endMs": 321860,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 315850,
+   "endMs": 316300,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 316650,
+   "endMs": 317400,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 317900,
+   "endMs": 318620,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 324130,
+   "endMs": 351470,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 344910,
+   "endMs": 345360,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 350010,
+   "endMs": 351090,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 353480,
+   "endMs": 355550,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 354110,
+   "endMs": 354820,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 356330,
+   "endMs": 356900,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 356510,
+   "endMs": 362140,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 356980,
+   "endMs": 357370,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 359110,
+   "endMs": 367650,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 364810,
+   "endMs": 366010,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 365930,
+   "endMs": 367840,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 371430,
+   "endMs": 375290,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 373840,
+   "endMs": 376830,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 375080,
+   "endMs": 375430,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 376800,
+   "endMs": 378940,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 379600,
+   "endMs": 384480,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 391130,
+   "endMs": 391740,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 393990,
+   "endMs": 394920,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 394380,
+   "endMs": 406270,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 396310,
+   "endMs": 399800,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 403240,
+   "endMs": 403350,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 420110,
+   "endMs": 420950,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 421200,
+   "endMs": 426550,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 421440,
+   "endMs": 422260,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 428120,
+   "endMs": 430220,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 432480,
+   "endMs": 434370,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 438740,
+   "endMs": 441990,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 439850,
+   "endMs": 441770,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 441590,
+   "endMs": 442120,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 443160,
+   "endMs": 450850,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 445230,
+   "endMs": 446450,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 450450,
+   "endMs": 451690,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 454000,
+   "endMs": 456940,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 457970,
+   "endMs": 460570,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 461090,
+   "endMs": 462160,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 465380,
+   "endMs": 470420,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 465480,
+   "endMs": 465990,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 467940,
+   "endMs": 468700,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 474410,
+   "endMs": 479350,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 476710,
+   "endMs": 477640,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 481260,
+   "endMs": 484680,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 481270,
+   "endMs": 481660,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 484480,
+   "endMs": 484720,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 487100,
+   "endMs": 487710,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 487430,
+   "endMs": 487820,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 488770,
+   "endMs": 491410,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 489880,
+   "endMs": 491340,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 492900,
+   "endMs": 518660,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 497400,
+   "endMs": 499980,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 501190,
+   "endMs": 504660,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 501760,
+   "endMs": 503220,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 501780,
+   "endMs": 502670,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 519870,
+   "endMs": 520950,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 520280,
+   "endMs": 536600,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 524310,
+   "endMs": 528630,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 525500,
+   "endMs": 525960,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 541430,
+   "endMs": 549530,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 545310,
+   "endMs": 545640,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 553660,
+   "endMs": 556770,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 554480,
+   "endMs": 555150,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 558670,
+   "endMs": 559330,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 561110,
+   "endMs": 561600,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 563120,
+   "endMs": 575320,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 575110,
+   "endMs": 577660,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 576510,
+   "endMs": 577210,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 576760,
+   "endMs": 581500,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 580850,
+   "endMs": 587570,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 582600,
+   "endMs": 582920,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 583850,
+   "endMs": 587980,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 584880,
+   "endMs": 585970,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 588370,
+   "endMs": 592280,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 590860,
+   "endMs": 591190,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 590980,
+   "endMs": 595930,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 593810,
+   "endMs": 594270,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 594190,
+   "endMs": 608090,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 603510,
+   "endMs": 604220,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 603880,
+   "endMs": 604220,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 605840,
+   "endMs": 606020,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 606660,
+   "endMs": 607020,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 608090,
+   "endMs": 613930,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 608130,
+   "endMs": 608980,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 613510,
+   "endMs": 617820,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 614070,
+   "endMs": 614890,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 617540,
+   "endMs": 619590,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 619130,
+   "endMs": 629370,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 621460,
+   "endMs": 622160,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 622020,
+   "endMs": 622230,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 623850,
+   "endMs": 624230,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 630370,
+   "endMs": 631200,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 631290,
+   "endMs": 637070,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 635540,
+   "endMs": 635880,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 636390,
+   "endMs": 637000,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 638100,
+   "endMs": 651490,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 645180,
+   "endMs": 645590,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 649130,
+   "endMs": 650290,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 653410,
+   "endMs": 655400,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 653570,
+   "endMs": 670240,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 661850,
+   "endMs": 662200,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 666690,
+   "endMs": 666940,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 675200,
+   "endMs": 704720,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 687250,
+   "endMs": 687560,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 688130,
+   "endMs": 688440,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 691120,
+   "endMs": 691890,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 691230,
+   "endMs": 692130,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 691490,
+   "endMs": 692220,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 701090,
+   "endMs": 701690,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 701100,
+   "endMs": 701880,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 705180,
+   "endMs": 706720,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 705960,
+   "endMs": 708910,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 708070,
+   "endMs": 708550,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 708610,
+   "endMs": 710930,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 711240,
+   "endMs": 713240,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 711880,
+   "endMs": 736050,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 712330,
+   "endMs": 712720,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 727670,
+   "endMs": 728160,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 734980,
+   "endMs": 751760,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 737290,
+   "endMs": 737670,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 746420,
+   "endMs": 746840,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 747660,
+   "endMs": 747950,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 749820,
+   "endMs": 755290,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 752590,
+   "endMs": 752950,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 755180,
+   "endMs": 758060,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 755680,
+   "endMs": 755920,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 757430,
+   "endMs": 779790,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 768520,
+   "endMs": 768980,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 772320,
+   "endMs": 772690,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 775600,
+   "endMs": 775840,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 777340,
+   "endMs": 777650,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 777920,
+   "endMs": 778660,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 779780,
+   "endMs": 794480,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 784990,
+   "endMs": 785280,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 787080,
+   "endMs": 787740,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 792170,
+   "endMs": 792620,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 792890,
+   "endMs": 793440,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 794460,
+   "endMs": 812030,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 803800,
+   "endMs": 805920,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 811150,
+   "endMs": 811490,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 812350,
+   "endMs": 815090,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 816150,
+   "endMs": 823630,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 816270,
+   "endMs": 818960,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 819960,
+   "endMs": 820260,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 821350,
+   "endMs": 827970,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 826060,
+   "endMs": 826350,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 828120,
+   "endMs": 831440,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 829370,
+   "endMs": 834050,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 830050,
+   "endMs": 830600,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 833260,
+   "endMs": 833800,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 834640,
+   "endMs": 844640,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 838640,
+   "endMs": 839000,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 841200,
+   "endMs": 843240,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 843730,
+   "endMs": 849580,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 850980,
+   "endMs": 861940,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 862330,
+   "endMs": 862760,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 863210,
+   "endMs": 863530,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 864300,
+   "endMs": 871740,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 864430,
+   "endMs": 865770,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 870180,
+   "endMs": 870690,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 872200,
+   "endMs": 872590,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 872950,
+   "endMs": 883240,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 878360,
+   "endMs": 878800,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 884380,
+   "endMs": 885170,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 885180,
+   "endMs": 899310,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 893630,
+   "endMs": 894310,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 895430,
+   "endMs": 895750,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 898710,
+   "endMs": 911780,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 905320,
+   "endMs": 905700,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 905770,
+   "endMs": 907500,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 911860,
+   "endMs": 912350,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 913690,
+   "endMs": 934880,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 923650,
+   "endMs": 924040,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 930830,
+   "endMs": 931440,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 932990,
+   "endMs": 933370,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 934740,
+   "endMs": 947560,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 945430,
+   "endMs": 945840,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 946040,
+   "endMs": 946660,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 948480,
+   "endMs": 953060,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 948600,
+   "endMs": 949090,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 949900,
+   "endMs": 950210,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 950910,
+   "endMs": 959240,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 951060,
+   "endMs": 951410,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 954930,
+   "endMs": 955270,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 956020,
+   "endMs": 958070,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 956780,
+   "endMs": 958600,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 957250,
+   "endMs": 957600,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 959480,
+   "endMs": 960290,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 959690,
+   "endMs": 972450,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 965100,
+   "endMs": 965570,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 966220,
+   "endMs": 966480,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 968840,
+   "endMs": 969230,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 970680,
+   "endMs": 971680,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 972920,
+   "endMs": 979940,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 981200,
+   "endMs": 989510,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 985490,
+   "endMs": 1014640,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 991070,
+   "endMs": 991470,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 1005060,
+   "endMs": 1005740,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 1005790,
+   "endMs": 1006250,
+   "speaker": "MEO015"
+  },
+  {
+   "startMs": 1005860,
+   "endMs": 1006440,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 1006900,
+   "endMs": 1007500,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 1009160,
+   "endMs": 1011300,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 1013700,
+   "endMs": 1024410,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 1018540,
+   "endMs": 1018910,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 1019990,
+   "endMs": 1020490,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 1022000,
+   "endMs": 1022960,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 1022320,
+   "endMs": 1023990,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 1025040,
+   "endMs": 1041560,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 1032930,
+   "endMs": 1033350,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 1037320,
+   "endMs": 1037950,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 1042190,
+   "endMs": 1042300,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 1042400,
+   "endMs": 1044160,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 1042580,
+   "endMs": 1043430,
+   "speaker": "MEE014"
+  },
+  {
+   "startMs": 1046420,
+   "endMs": 1048480,
+   "speaker": "FEE016"
+  },
+  {
+   "startMs": 1047760,
+   "endMs": 1049040,
+   "speaker": "FEE013"
+  },
+  {
+   "startMs": 1048050,
+   "endMs": 1048380,
+   "speaker": "MEO015"
+  }
+ ]
+}
