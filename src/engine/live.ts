@@ -17,7 +17,7 @@
  */
 import { computeFbank, WESPEAKER_FBANK } from './fbank.js';
 import {
-  agglomerative, absorbTinyClusters, centreEmbeddings, normalise, resolveSpeakerCount,
+  agglomerative, absorbTinyClusters, centreEmbeddings, normalise, resolveSpeakerCount, assessClarity,
   keepBusiest, placeSplinters, splinterHeadroom, carryIdentities, CLUSTER_HEADROOM, OTHER_VOICE,
   DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
@@ -60,6 +60,9 @@ export interface LiveState {
   backgroundMs: number;
   /** Speech grouped into voices that are not participants. */
   otherVoicesMs: number;
+  /** How muddled the voices arrive; see assessClarity. */
+  spread: number;
+  clear: boolean;
 }
 
 /**
@@ -91,6 +94,14 @@ export interface DiagnosticsBundle {
   identities: number[];
   /** Unit-length embeddings, rounded to four decimals. */
   vectors: number[][];
+  /** The browser and the audio processing the device reported applying, when known. */
+  capture?: CaptureInfo;
+}
+
+export interface CaptureInfo {
+  userAgent?: string;
+  /** MediaTrackSettings of the microphone track: noiseSuppression, autoGainControl, echoCancellation, sampleRate… */
+  track?: Record<string, unknown>;
 }
 
 export interface LiveSession {
@@ -105,7 +116,7 @@ export interface LiveSession {
   state: () => LiveState;
   onUpdate: (handler: (state: LiveState) => void) => void;
   /** Everything the session kept, for reproducing it offline. See DiagnosticsBundle. */
-  exportDiagnostics: (meta?: { version?: string }) => DiagnosticsBundle;
+  exportDiagnostics: (meta?: { version?: string; capture?: CaptureInfo }) => DiagnosticsBundle;
   dispose: () => void;
 }
 
@@ -306,6 +317,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       byId.set(l, cur);
     });
     const spokenMs = [...byId.values()].reduce((s, v) => s + v.totalMs, 0);
+    const clarity = vectors.length > 0 ? assessClarity(centreEmbeddings(vectors), identities, durations) : { spread: 0, clear: true };
     const speakers: LiveSpeaker[] = [...byId.entries()]
       .map(([id, v]) => ({
         id,
@@ -326,6 +338,8 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       samples: vectors.length,
       backgroundMs,
       otherVoicesMs,
+      spread: clarity.spread,
+      clear: clarity.clear,
     };
   }
 
@@ -369,6 +383,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       levels: [...sampleLevels],
       identities: [...identities],
       vectors: vectors.map((v) => Array.from(v, (x) => Math.round(x * 1e4) / 1e4)),
+      ...(meta.capture ? { capture: meta.capture } : {}),
     }),
     dispose: () => { buffer = new Float32Array(0); handlers.length = 0; disposed = true; },
   };

@@ -56,6 +56,8 @@ namesInput?.addEventListener('input', () => {
 });
 
 let capture: Capture | null = null;
+/** What the device reported doing to the audio, kept for the diagnostics export. */
+let lastCaptureSettings: Record<string, unknown> | null = null;
 let session: LiveSession | null = null;
 let meterTimer: number | null = null;
 let running = false;
@@ -156,9 +158,10 @@ function render(state: LiveState) {
   const badge = $('badge');
   if (badge) {
     badge.classList.toggle('on', Boolean(active));
+    // The verdict is about audio a few seconds old, and says so.
     const label = active
-      ? (typed[active.id] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${active.id + 1}`)
-      : (running ? t('listening') : t('waiting'));
+      ? `${typed[active.id] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${active.id + 1}`} · ${t('aMomentAgo')}`
+      : (running ? t('listening') : (session ? t('paused') : t('waiting')));
     setText('badge-text', label);
   }
 
@@ -166,6 +169,9 @@ function render(state: LiveState) {
   if (warn) {
     if (state.samples > 0 && state.reliability !== 'good') {
       warn.textContent = state.reliability === 'insufficient' ? t('insufficient') : t('lowConfidence');
+      warn.hidden = false;
+    } else if (state.samples > 0 && !state.clear) {
+      warn.textContent = t('unclearVoices');
       warn.hidden = false;
     } else {
       warn.hidden = true;
@@ -181,6 +187,7 @@ function render(state: LiveState) {
       <dt>speech heard</dt><dd>${(state.spokenMs / 1000).toFixed(1)} s</dd>
       <dt>too far away, dropped</dt><dd>${(state.backgroundMs / 1000).toFixed(1)} s</dd>
       <dt>not a participant</dt><dd>${(state.otherVoicesMs / 1000).toFixed(1)} s</dd>
+      <dt>voice clarity (spread, lower is clearer)</dt><dd>${state.spread.toFixed(2)}</dd>
       <dt>listening for</dt><dd>${(state.elapsedMs / 1000).toFixed(0)} s</dd>
       <dt>speaker count from</dt><dd>${state.countHint.source}</dd>
       <dt>reliability</dt><dd>${state.reliability}</dd>
@@ -241,6 +248,7 @@ async function start() {
     session.onUpdate(render);
   }
   capture.onAudio((samples) => session?.push(samples));
+  lastCaptureSettings = capture.settings();
 
   running = true;
   if (resetButton) resetButton.hidden = true;
@@ -321,7 +329,10 @@ function reset() {
  */
 function exportDiagnostics() {
   if (!session) return;
-  const bundle = session.exportDiagnostics({ version: __RONDA_VERSION__ });
+  const bundle = session.exportDiagnostics({
+    version: __RONDA_VERSION__,
+    capture: { userAgent: navigator.userAgent, ...(lastCaptureSettings ? { track: lastCaptureSettings } : {}) },
+  });
   const blob = new Blob([JSON.stringify(bundle)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

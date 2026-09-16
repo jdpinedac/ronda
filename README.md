@@ -138,6 +138,17 @@ stored embeddings in seconds. Fetch the recordings with `spike/08-fetch-ami.py` 
 - It measures speaking time. It does not measure who contributed, who was listening,
   or who was right.
 
+## When the voices arrive muddled
+
+Ronda measures how tightly each person's voice samples cluster. On the annotated
+recordings that spread sits between 0.19 and 0.55; when it goes above 0.6 the shares
+still add up but who is speaking at each moment becomes unreliable, and the live page
+says so. Distance to the phone, echo from windows, street noise and the phone's own
+audio processing all raise it. Moving the phone closer to the people, and away from
+noise and glass, is the one lever that reliably lowers it. The "who is speaking" badge
+is labelled *a moment ago* because that is what it is: a verdict about audio a few
+seconds old (ADR 0008).
+
 ## Language and theme
 
 The interface is in Spanish and English, light and dark. It follows the browser's
