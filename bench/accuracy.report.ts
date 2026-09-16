@@ -14,10 +14,18 @@
  *     REC=meeting npm run bench          # substring filter on the name
  *     BENCH_DUMP=1 npm run bench         # also write embeddings to bench/out/
  *     BENCH_DUMP=only npm run bench      # write embeddings and stop; a quarter of the time
+ *     BENCH_ONLY_COUNT=1 BG_RATIO=0 ...  # file path with the count only, background filter off
+ *     BENCH_ONLY_COUNT=1 BENCH_BG=1 ...   # ... with "a television is audible" ticked
  */
 import { describe, it, vi } from 'vitest';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 vi.mock('../src/engine/models.js', () => import('./node-models.js'));
+// BG_RATIO overrides the background level ratio, to measure the filter itself.
+vi.mock('../src/engine/levels.js', async (importOriginal) => {
+  const m = await importOriginal<typeof import('../src/engine/levels.js')>();
+  const ratio = process.env.BG_RATIO !== undefined ? Number(process.env.BG_RATIO) : m.BACKGROUND_LEVEL_RATIO;
+  return { ...m, selectForeground: (levels: readonly number[]) => m.selectForeground(levels, ratio) };
+});
 import { diarize } from '../src/engine/diarize.js';
 import { startLiveSession } from '../src/engine/live.js';
 import { diarizationErrorRate, type Turn } from '../src/metrics/der.js';
@@ -32,8 +40,11 @@ const RECORDINGS: { name: string; path: string; people: number; truth?: string }
   { name: 'ami-IS1009a (AMI, full 13.4 min)', path: `${TD}/ami-IS1009a.wav`, people: 4, truth: `${TD}/ami-IS1009a.truth.json` },
   { name: 'ami-TS3003a (AMI, full 24.6 min)', path: `${TD}/ami-TS3003a.wav`, people: 4, truth: `${TD}/ami-TS3003a.truth.json` },
   { name: 'four-speakers-zh (clean, 57 s)', path: `${TD}/0-four-speakers-zh.wav`, people: 4 },
-  { name: 'with-distant-voices (90 s)', path: `${TD}/with-distant-voices.wav`, people: 4 },
-  { name: 'distant-in-gaps (90 s)', path: `${TD}/distant-in-gaps.wav`, people: 4 },
+  // The same 90 s as the example, with voices from another table mixed in:
+  // under the speech, and in the gaps. Scored against the example's annotation,
+  // so anything attributed to the intruders counts as a false alarm.
+  { name: 'with-distant-voices (90 s)', path: `${TD}/with-distant-voices.wav`, people: 4, truth: `${ROOT}/public/example/meeting.truth.json` },
+  { name: 'distant-in-gaps (90 s)', path: `${TD}/distant-in-gaps.wav`, people: 4, truth: `${ROOT}/public/example/meeting.truth.json` },
   { name: 'real-phone-on-table (34 s)', path: `${TD}/real-phone-on-table.wav`, people: 2 },
 ];
 const filter = process.env.REC ?? '';
@@ -83,6 +94,14 @@ describe('accuracy', () => {
       const der = (spans: Turn[]) => truth
         ? `  DER=${diarizationErrorRate(truth.turns, spans, totalMs).der.toFixed(3)}` : '';
 
+      if (process.env.BENCH_ONLY_COUNT) {
+        const bg = process.env.BENCH_BG === '1';
+        const r = await diarize(audio, { speakerCount: rec.people, backgroundVoices: bg });
+        const d = diarizationErrorRate(truth?.turns ?? [], r.spans, totalMs);
+        out.push(`[file, count=${rec.people}${bg ? ', tv on' : ''}]  speakers=${r.speakers.length}  shares=${pct(r.speakers.map((s) => s.share))}  DER=${d.der.toFixed(3)} miss=${sec(d.missedMs)} fa=${sec(d.falseAlarmMs)} conf=${sec(d.confusionMs)}  dropped-as-distant=${sec(r.diagnostics.backgroundMs)}s`);
+        console.log(out.join('\n'));
+        return;
+      }
       resetCaptured();
       const auto = await diarize(audio, {});
       out.push(`[file, no count]   speakers=${String(auto.speakers.length).padStart(2)}  shares=${pct(auto.speakers.map((s) => s.share))}${der(auto.spans)}  reliability=${auto.reliability}`);

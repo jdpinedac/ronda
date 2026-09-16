@@ -111,11 +111,13 @@ stored embeddings in seconds. Fetch the recordings with `spike/08-fetch-ami.py` 
   when there are no intruders makes results worse (a two-woman split went from 62/38 to
   72/28, and meeting error rose from 0.199 to 0.219). Nothing in the audio distinguishes
   the two situations reliably, so the person in the room is asked rather than guessed at.
-- Speech from outside the conversation — the next table, a television — is handled two
-  ways: rejected by loudness when it is distant, and given its own group and discarded
-  when it is close enough to be loud. Neither is perfect. A soft-spoken person at the
-  table can be mistaken for background, and someone who barely speaks can be discarded
-  as a non-participant.
+- Speech from outside the conversation — the next table, a television — is handled only
+  when you tick the box that says it is there: quiet speech is then rejected by loudness,
+  and louder intruders get their own group and are discarded. Neither is perfect. With
+  the box ticked, a soft-spoken person at the table can be mistaken for background, and
+  someone who barely speaks can be discarded as a non-participant. With it unticked,
+  nothing is dropped, and a nearby voice is credited to whoever it most resembles
+  ([ADR 0007](docs/adr/0007-drop-distant-speech-only-when-told-about-intruders.md)).
 - A single microphone at a large table is the hardest case. Expect approximation, not
   accounting.
 - Accuracy falls with length. Over three minutes of a four-person meeting a tenth of the

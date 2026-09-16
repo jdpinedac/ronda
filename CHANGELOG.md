@@ -4,6 +4,15 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [Unreleased]
+
+### Changed
+- Quiet speech is dropped as coming from outside the conversation only when
+  "a television, radio or nearby table is audible" is ticked. Measured on
+  whole meetings, the filter dropped real speech wherever it acted — nine
+  seconds on one meeting, a fifth of a clean clip — and helped only where
+  intruders were present (ADR 0007).
+
 ## [0.1.0-rc.2] — 2026-09-16
 
 Second candidate. Same measurement on the table as on a file, and a build
