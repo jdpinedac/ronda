@@ -4,6 +4,15 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [Unreleased]
+
+### Changed
+- In the live mode a person keeps their colour, row and name for the whole
+  session. Groups used to be renumbered by speaking time after every update,
+  so when one person overtook another their colours and names swapped.
+  Identities are now carried across re-clusterings by the speech each group
+  shares with the previous one. Both pages number people by who spoke first.
+
 ## [0.1.0-rc.3] — 2026-09-16
 
 Third candidate. Nothing is dropped for being quiet unless you say there is a

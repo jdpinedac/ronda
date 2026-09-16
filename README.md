@@ -40,8 +40,9 @@ Before it starts, Ronda asks how many people are at the table, and it will not s
 without an answer. That number matters more than any model parameter: without it the
 grouping step guesses, and the guess gets worse the longer the conversation runs — a
 four-person meeting reached ten "voices" after a quarter of an hour. See
-[ADR 0004](docs/adr/0004-ask-for-the-number-of-people.md). Names can be typed too,
-but they are labels for the list only; Ronda does not yet recognise who is who.
+[ADR 0004](docs/adr/0004-ask-for-the-number-of-people.md). Names can be typed too:
+the first goes to whoever speaks first, and everyone keeps their name and colour for
+the session. Ronda does not yet recognise who is who.
 
 ## What it costs to run
 
