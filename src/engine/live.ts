@@ -140,10 +140,13 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     const usable = speechSpans(spans, MIN_SPEECH_MS);
 
     // Judge loudness against everything heard so far, so the threshold settles
-    // as the conversation establishes its own level.
+    // as the conversation establishes its own level — and only when the user
+    // has said there are voices outside the conversation. See diarize().
     const blockLevels = usable.map((s) => rms(window.subarray(
       msToSample(s.startMs - windowStartMs), msToSample(s.endMs - windowStartMs))));
-    const keep = selectForeground([...levels, ...blockLevels]).slice(levels.length);
+    const keep = opts.backgroundVoices
+      ? selectForeground([...levels, ...blockLevels]).slice(levels.length)
+      : blockLevels.map(() => true);
     levels.push(...blockLevels);
 
     let heard: number | null = null;

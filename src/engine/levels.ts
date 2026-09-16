@@ -16,6 +16,10 @@
  * This is a real trade-off, not a free win. Someone soft-spoken at the table
  * can fall below the line, so the threshold is deliberately well clear of the
  * quietest legitimate speech observed, and how much was dropped is reported.
+ *
+ * Measured on whole annotated meetings, it dropped real speech wherever it
+ * acted and helped only where intruders were present, so it now runs only
+ * when the user has said there are voices outside the conversation. ADR 0007.
  */
 
 /** Root-mean-square level of a block of samples. */

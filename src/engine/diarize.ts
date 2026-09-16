@@ -142,10 +142,12 @@ export async function diarize(
 
   // Speech from outside the conversation — the next table, a television — is
   // still speech, and counting it invents participants. Distance is what
-  // separates it. See levels.ts.
+  // separates it, but only when the user has said there are intruders: with
+  // nobody outside the conversation, quiet speech is a soft-spoken person, and
+  // dropping it cost real speech on every meeting it touched. See levels.ts.
   const levels = candidates.map((s) =>
     rms(audio.subarray(msToSample(s.startMs), msToSample(s.endMs))));
-  const foreground = selectForeground(levels);
+  const foreground = opts.backgroundVoices ? selectForeground(levels) : levels.map(() => true);
   const usable = candidates.filter((_, i) => foreground[i]);
   const backgroundMs = candidates
     .filter((_, i) => !foreground[i])

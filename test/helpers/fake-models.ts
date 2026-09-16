@@ -57,19 +57,22 @@ export async function runEmbedding(_s: unknown, features: Float32Array, numFrame
   return out;
 }
 
-/** A conversation between the two tones. Turns are [speaker, seconds]. */
-export function conversation(turns: readonly (readonly ['A' | 'B' | '-', number])[]): Float32Array {
+/**
+ * A conversation between the two tones. Turns are [speaker, seconds] with an
+ * optional amplitude, 1 being the normal level; a far-away voice is quiet.
+ */
+export function conversation(turns: readonly (readonly ['A' | 'B' | '-', number, number?])[]): Float32Array {
   const total = turns.reduce((s, [, sec]) => s + sec, 0);
   const audio = new Float32Array(Math.round(total * SAMPLE_RATE));
   let offset = 0;
-  for (const [who, sec] of turns) {
+  for (const [who, sec, amplitude = 1] of turns) {
     const n = Math.round(sec * SAMPLE_RATE);
     if (who !== '-') {
       const hz = who === 'A' ? 200 : 2000;
       for (let i = 0; i < n; i++) {
         const t = (offset + i) / SAMPLE_RATE;
         // Amplitude modulation gives the fbank frames something to vary by.
-        audio[offset + i] = 0.3 * (0.6 + 0.4 * Math.sin(2 * Math.PI * 3 * t)) * Math.sin(2 * Math.PI * hz * t);
+        audio[offset + i] = 0.3 * amplitude * (0.6 + 0.4 * Math.sin(2 * Math.PI * 3 * t)) * Math.sin(2 * Math.PI * hz * t);
       }
     }
     offset += n;

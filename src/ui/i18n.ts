@@ -85,8 +85,8 @@ const STRINGS = {
     en: 'A television, radio or nearby table is audible',
   },
   backgroundVoicesHint: {
-    es: 'Deja sitio para esas voces, para que no se las atribuya a nadie de la mesa. Si no las hay, déjalo sin marcar: activarlo empeora el resultado.',
-    en: 'Leaves room for those voices so they are not credited to anyone at the table. If there are none, leave it unticked — turning it on makes results worse.',
+    es: 'Ignora el habla mucho más baja que la mesa y deja sitio para esas voces, para que no se las atribuya a nadie. Si no las hay, déjalo sin marcar: activarlo puede quitarle tiempo a quien habla bajito.',
+    en: 'Ignores speech much quieter than the table and leaves room for those voices so they are not credited to anyone. If there are none, leave it unticked — turning it on can cost a soft-spoken person their time.',
   },
   chooseFile: { es: 'Elegir archivo', en: 'Choose file' },
   analyse: { es: 'Analizar', en: 'Analyse' },
