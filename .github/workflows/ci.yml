@@ -16,7 +16,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: npm test
+      - run: npm run coverage
       - run: npm run build
       # onnxruntime-web is the only runtime dependency and should stay clean.
       # Dev-only advisories are reported but do not fail the build.
