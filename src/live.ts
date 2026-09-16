@@ -99,14 +99,16 @@ function render(state: LiveState) {
   const circumference = 2 * Math.PI * 100;
   segments.innerHTML = '';
   let cumulative = 0;
-  state.speakers.forEach((sp, i) => {
+  // Speakers come in identity order, which never changes during a session,
+  // so a person's colour, row and name stay put while their share moves.
+  state.speakers.forEach((sp) => {
     const raw = sp.share * circumference;
     const gap = state.speakers.length > 1 ? 3 : 0;
     const len = Math.max(0, raw - gap);
     const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     c.setAttribute('class', 'dial-seg');
     c.setAttribute('cx', '120'); c.setAttribute('cy', '120'); c.setAttribute('r', '100');
-    c.setAttribute('stroke', PALETTE[i % PALETTE.length]!);
+    c.setAttribute('stroke', PALETTE[sp.id % PALETTE.length]!);
     c.setAttribute('stroke-dasharray', `${len} ${circumference - len}`);
     c.setAttribute('stroke-dashoffset', String(-cumulative));
     segments.appendChild(c);
@@ -118,12 +120,12 @@ function render(state: LiveState) {
 
   const typed = typedNames();
   legend.innerHTML = '';
-  state.speakers.forEach((sp, i) => {
+  state.speakers.forEach((sp) => {
     const li = document.createElement('li');
     li.className = sp.active ? 'legend-row active' : 'legend-row';
-    const name = typed[i] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${i + 1}`;
+    const name = typed[sp.id] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${sp.id + 1}`;
     li.innerHTML =
-      `<span class="dot" style="background:${PALETTE[i % PALETTE.length]}"></span>` +
+      `<span class="dot" style="background:${PALETTE[sp.id % PALETTE.length]}"></span>` +
       `<span class="name">${name}</span><span class="leader"></span>` +
       `<span class="stat">${formatTime(sp.totalMs)}</span>` +
       `<span class="pct">${Math.round(sp.share * 100)}%</span>`;
@@ -135,7 +137,7 @@ function render(state: LiveState) {
   if (badge) {
     badge.classList.toggle('on', Boolean(active));
     const label = active
-      ? (typed[state.speakers.indexOf(active)] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${state.speakers.indexOf(active) + 1}`)
+      ? (typed[active.id] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${active.id + 1}`)
       : (running ? t('listening') : t('waiting'));
     setText('badge-text', label);
   }

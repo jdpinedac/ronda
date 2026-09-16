@@ -91,8 +91,8 @@ const STRINGS = {
   chooseFile: { es: 'Elegir archivo', en: 'Choose file' },
   analyse: { es: 'Analizar', en: 'Analyse' },
   namesHint: {
-    es: 'Solo son etiquetas para la lista: Ronda todavía no reconoce quién es quién.',
-    en: 'Labels for the list only: Ronda does not yet recognise who is who.',
+    es: 'El primer nombre va a quien habla primero, y cada quien conserva su nombre y color. Ronda todavía no reconoce quién es quién.',
+    en: 'The first name goes to whoever speaks first, and everyone keeps their name and colour. Ronda does not yet recognise who is who.',
   },
   segmenting: { es: 'Buscando dónde habla cada quien…', en: 'Finding who speaks where…' },
   identifying: { es: 'Comparando las voces…', en: 'Comparing voices…' },

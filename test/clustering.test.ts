@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   cosineDistance, normalise, agglomerative, absorbTinyClusters,
   resolveSpeakerCount, DEFAULT_THRESHOLD, centreEmbeddings,
-  splinterHeadroom, placeSplinters, OTHER_VOICE,
+  splinterHeadroom, placeSplinters, carryIdentities, OTHER_VOICE,
 } from '../src/engine/clustering.js';
 
 /**
@@ -297,5 +297,56 @@ describe('placeSplinters', () => {
   it('changes nothing when there is no group to place into', () => {
     const labels = vectors.map(() => OTHER_VOICE);
     expect(placeSplinters(vectors, labels, durations)).toEqual(labels);
+  });
+});
+
+describe('carryIdentities', () => {
+  const d = (n: number) => Array.from({ length: n }, () => 1000);
+
+  it('gives every group a fresh identity when there is no history', () => {
+    const r = carryIdentities([0, 0, 1, 1, 2], [], d(5), 0);
+    expect(r.identities).toEqual([0, 0, 1, 1, 2]);
+    expect(r.nextId).toBe(3);
+  });
+
+  it('keeps identities when groups are merely renumbered', () => {
+    // Group labels swapped by rank; membership unchanged.
+    const r = carryIdentities([1, 1, 0, 0, 0], [7, 7, 3, 3, 3], d(5), 8);
+    expect(r.identities).toEqual([7, 7, 3, 3, 3]);
+    expect(r.nextId).toBe(8);
+  });
+
+  it('follows the members, weighted by how long they spoke', () => {
+    // Old identity 3 held indices 0-2. The new group 0 keeps 0 and 1 (short)
+    // and group 1 takes 2 (long) plus a new sample: 3 goes with the long one.
+    const r = carryIdentities([0, 0, 1, 1], [3, 3, 3, 3], [500, 500, 4000, 1000], 4);
+    expect(r.identities[2]).toBe(3);
+    expect(r.identities[3]).toBe(3);
+    expect(r.identities[0]).toBe(4);
+    expect(r.nextId).toBe(5);
+  });
+
+  it('assigns identities to new samples along with their group', () => {
+    const r = carryIdentities([0, 0, 1, 1, 0], [5, 5, 6, 6], [1000, 1000, 1000, 1000, 1000], 7);
+    expect(r.identities).toEqual([5, 5, 6, 6, 5]);
+  });
+
+  it('leaves unattributed samples unattributed', () => {
+    const r = carryIdentities([0, OTHER_VOICE, 0], [2, 2, 2], d(3), 3);
+    expect(r.identities).toEqual([2, OTHER_VOICE, 2]);
+  });
+
+  it('hands a vacant identity to a group that matched nothing, before minting one', () => {
+    // Old identity 6 held indices 2-3, but its samples moved in with 5's.
+    // The group made of the new sample takes 6 rather than becoming 7.
+    const r = carryIdentities([0, 0, 0, 0, 1], [5, 5, 6, 6], [1000, 1000, 1000, 1000, 1000], 7);
+    expect(r.identities).toEqual([5, 5, 5, 5, 6]);
+    expect(r.nextId).toBe(7);
+  });
+
+  it('gives a split-off group a new identity rather than stealing one', () => {
+    const r = carryIdentities([0, 0, 1, 1], [9, 9, 9, 9], [3000, 3000, 1000, 1000], 10);
+    expect(r.identities).toEqual([9, 9, 10, 10]);
+    expect(r.nextId).toBe(11);
   });
 });

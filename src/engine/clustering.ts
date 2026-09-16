@@ -317,6 +317,72 @@ export function placeSplinters(
   });
 }
 
+/**
+ * Carries speaker identities across a re-clustering.
+ *
+ * The live path clusters every sample heard so far from scratch after each
+ * window, and the groups come back numbered by how much each has spoken.
+ * Those numbers are not identities: when one person overtakes another, they
+ * swap. This matches each new group with the previous identity it shares the
+ * most speech with — most of a person's samples stay together from one
+ * clustering to the next — so the person who was "1" stays "1", whatever
+ * their rank. A group that matches nothing takes an identity that fell vacant
+ * in this round, and only when none did does a fresh one appear; samples
+ * marked OTHER_VOICE stay unattributed.
+ *
+ * `previous` holds the identity of each sample after the last clustering and
+ * may be shorter than `labels` when new samples arrived. Identities are
+ * numbered from `nextId` upwards, in order of each new group's first sample.
+ */
+export function carryIdentities(
+  labels: readonly number[],
+  previous: readonly number[],
+  durationsMs: readonly number[],
+  nextId: number,
+): { identities: number[]; nextId: number } {
+  // Shared speech between each new group and each previous identity.
+  const shared = new Map<number, Map<number, number>>();
+  const firstIndex = new Map<number, number>();
+  labels.forEach((l, i) => {
+    if (l === OTHER_VOICE) return;
+    if (!firstIndex.has(l)) firstIndex.set(l, i);
+    const prev = previous[i];
+    if (prev === undefined || prev === OTHER_VOICE) return;
+    const row = shared.get(l) ?? new Map<number, number>();
+    row.set(prev, (row.get(prev) ?? 0) + (durationsMs[i] ?? 0));
+    shared.set(l, row);
+  });
+
+  // Greedy: the strongest overlaps claim their identities first.
+  const pairs: { label: number; identity: number; ms: number }[] = [];
+  for (const [label, row] of shared) for (const [identity, ms] of row) pairs.push({ label, identity, ms });
+  pairs.sort((a, b) => b.ms - a.ms || a.label - b.label);
+  const identityOf = new Map<number, number>();
+  const taken = new Set<number>();
+  for (const { label, identity, ms } of pairs) {
+    if (ms <= 0 || identityOf.has(label) || taken.has(identity)) continue;
+    identityOf.set(label, identity);
+    taken.add(identity);
+  }
+
+  // A group that matched nothing takes an identity that fell vacant — the
+  // people at the table have not changed, one of them has simply been
+  // re-sorted — and only when none is vacant does a new identity appear. So
+  // with the head count known, the identities never outnumber the people.
+  const unmatched = [...firstIndex.entries()].sort((a, b) => a[1] - b[1]).map(([label]) => label).filter((l) => !identityOf.has(l));
+  const vacant = [...new Set(previous.filter((p) => p !== OTHER_VOICE && p !== undefined))].filter((p) => !taken.has(p)).sort((a, b) => a - b);
+  let next = nextId;
+  for (const label of unmatched) {
+    const reuse = vacant.shift();
+    identityOf.set(label, reuse ?? next++);
+  }
+
+  return {
+    identities: labels.map((l) => (l === OTHER_VOICE ? OTHER_VOICE : identityOf.get(l)!)),
+    nextId: next,
+  };
+}
+
 export type SpeakerCountSource = 'calibration' | 'count' | 'names' | 'automatic';
 
 export interface SpeakerCountHint {

@@ -130,7 +130,13 @@ function render(result: DiarizationResult) {
   segments.innerHTML = '';
   let cumulative = 0;
 
-  result.speakers.forEach((sp, i) => {
+  // Number people by who spoke first, as the live page does, so "Speaker 1"
+  // means the same thing on both pages and a typed name goes to the same seat.
+  const firstHeard = new Map<number, number>();
+  for (const s of result.spans) if (!firstHeard.has(s.speaker)) firstHeard.set(s.speaker, s.startMs);
+  const speakers = [...result.speakers].sort((a, b) => (firstHeard.get(a.id) ?? Infinity) - (firstHeard.get(b.id) ?? Infinity));
+
+  speakers.forEach((sp, i) => {
     const raw = sp.share * circumference;
     const gap = result.speakers.length > 1 ? 3 : 0;
     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -149,7 +155,7 @@ function render(result: DiarizationResult) {
 
   const typed = typedNames();
   legend.innerHTML = '';
-  result.speakers.forEach((sp, i) => {
+  speakers.forEach((sp, i) => {
     const li = document.createElement('li');
     li.className = 'legend-row';
     const name = typed[i] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${i + 1}`;

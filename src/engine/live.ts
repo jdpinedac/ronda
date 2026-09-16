@@ -18,7 +18,7 @@
 import { computeFbank, WESPEAKER_FBANK } from './fbank.js';
 import {
   agglomerative, absorbTinyClusters, centreEmbeddings, normalise, resolveSpeakerCount,
-  keepBusiest, placeSplinters, splinterHeadroom, CLUSTER_HEADROOM, OTHER_VOICE,
+  keepBusiest, placeSplinters, splinterHeadroom, carryIdentities, CLUSTER_HEADROOM, OTHER_VOICE,
   DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
 import { rms, selectForeground } from './levels.js';
@@ -37,6 +37,7 @@ const HOP_MS = 5_000;
 const MIN_SPEECH_MS = 800;
 
 export interface LiveSpeaker {
+  /** Stable for the whole session: the same person keeps the same id. */
   id: number;
   totalMs: number;
   share: number;
@@ -105,7 +106,9 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
   const levels: number[] = [];
   let backgroundMs = 0;
   let lastSpeaker: number | null = null;
-  let labels: number[] = [];
+  /** Stable identity of each voice sample; see carryIdentities. */
+  let identities: number[] = [];
+  let nextIdentity = 0;
 
   const handlers: ((s: LiveState) => void)[] = [];
   const msToSample = (ms: number) => Math.round((ms / 1000) * SAMPLE_RATE);
@@ -179,9 +182,10 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       if (target >= 0) credited[target] = credited[target]! + (overlaps[oi]!.endMs - overlaps[oi]!.startMs);
     });
 
-    // Re-cluster everything heard so far, so earlier mistakes get corrected.
+    // Re-cluster everything heard so far, so earlier mistakes get corrected —
+    // and carry each person's identity over, so their colour and name do not.
     if (vectors.length > 0) {
-      labels = countHint.k !== null
+      const labels = countHint.k !== null
         ? clusterKnownCount(centreEmbeddings(vectors), countHint.k)
         : absorbTinyClusters(
           vectors,
@@ -189,8 +193,9 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
           durations,
           { minSegments: 2, minDurationMs: 2000 },
         );
+      ({ identities, nextId: nextIdentity } = carryIdentities(labels, identities, durations, nextIdentity));
     }
-    lastSpeaker = heard !== null ? (labels[heard] ?? null) : null;
+    lastSpeaker = heard !== null ? (identities[heard] ?? null) : null;
     trustedToMs = Math.max(trustedToMs, trustToMs);
   }
 
@@ -239,7 +244,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
   function state(): LiveState {
     const byId = new Map<number, { totalMs: number; segments: number }>();
     let otherVoicesMs = 0;
-    labels.forEach((l, i) => {
+    identities.forEach((l, i) => {
       const ms = (durations[i] ?? 0) + (credited[i] ?? 0);
       if (l === OTHER_VOICE) {
         otherVoicesMs += ms;
@@ -259,7 +264,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
         segments: v.segments,
         active: id === lastSpeaker,
       }))
-      .sort((a, b) => b.totalMs - a.totalMs);
+      .sort((a, b) => a.id - b.id);
 
     return {
       speakers,
