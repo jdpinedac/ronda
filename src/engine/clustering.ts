@@ -44,47 +44,74 @@ export interface ClusterOptions {
 /**
  * Average-linkage agglomerative clustering. Returns a label per input vector.
  *
- * Sized for conversation: a one-hour session yields a couple of thousand
- * segments, and the O(n^3) worst case is milliseconds at that scale.
+ * Pairwise distances are computed once, and after each merge the distance from
+ * the new group to every other is the size-weighted mean of the two it came
+ * from (the Lance–Williams update for average linkage), which is exactly the
+ * mean of the member-to-member distances without recomputing them. That
+ * makes a merge O(n) and the whole run O(n²) in memory and O(n³) in scalar
+ * operations, with no cosine products inside the loop.
+ *
+ * Sized for conversation: the live path re-clusters every sample heard so far
+ * after each 10-second block, an hour is a few hundred samples, and a phone
+ * has one slow core. 300 samples cluster in well under a second.
  */
 export function agglomerative(vectors: readonly Float32Array[], opts: ClusterOptions): number[] {
   const n = vectors.length;
   if (n === 0) return [];
   if (n === 1) return [0];
 
-  let groups: number[][] = vectors.map((_, i) => [i]);
-
-  const groupDistance = (g: readonly number[], h: readonly number[]): number => {
-    let sum = 0;
-    for (const i of g) for (const j of h) sum += cosineDistance(vectors[i]!, vectors[j]!);
-    return sum / (g.length * h.length);
-  };
+  // Distance between groups, indexed by the group's original position. A
+  // merged group keeps the lower index; the higher one goes inactive.
+  const dist = new Float32Array(n * n);
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const d = cosineDistance(vectors[i]!, vectors[j]!);
+      dist[i * n + j] = d;
+      dist[j * n + i] = d;
+    }
+  }
+  const active = new Uint8Array(n).fill(1);
+  const size = new Int32Array(n).fill(1);
+  const members: number[][] = vectors.map((_, i) => [i]);
+  let remaining = n;
 
   const targetK = opts.k !== undefined ? Math.max(1, Math.min(opts.k, n)) : 1;
   const threshold = opts.threshold;
 
   for (;;) {
-    if (opts.k !== undefined && groups.length <= targetK) break;
-    if (groups.length === 1) break;
+    if (opts.k !== undefined && remaining <= targetK) break;
+    if (remaining === 1) break;
 
     let best = Infinity;
     let bi = -1;
     let bj = -1;
-    for (let i = 0; i < groups.length; i++) {
-      for (let j = i + 1; j < groups.length; j++) {
-        const d = groupDistance(groups[i]!, groups[j]!);
+    for (let i = 0; i < n; i++) {
+      if (!active[i]) continue;
+      for (let j = i + 1; j < n; j++) {
+        if (!active[j]) continue;
+        const d = dist[i * n + j]!;
         if (d < best) { best = d; bi = i; bj = j; }
       }
     }
     if (bi < 0) break;
     if (opts.k === undefined && threshold !== undefined && best > threshold) break;
 
-    groups[bi] = groups[bi]!.concat(groups[bj]!);
-    groups.splice(bj, 1);
+    const si = size[bi]!;
+    const sj = size[bj]!;
+    for (let k = 0; k < n; k++) {
+      if (!active[k] || k === bi || k === bj) continue;
+      const d = (si * dist[bi * n + k]! + sj * dist[bj * n + k]!) / (si + sj);
+      dist[bi * n + k] = d;
+      dist[k * n + bi] = d;
+    }
+    members[bi] = members[bi]!.concat(members[bj]!);
+    size[bi] = si + sj;
+    active[bj] = 0;
+    remaining--;
   }
 
   // Label by first appearance so output is stable and readable.
-  groups = groups.sort((a, b) => Math.min(...a) - Math.min(...b));
+  const groups = members.filter((_, i) => active[i]).sort((a, b) => Math.min(...a) - Math.min(...b));
   const labels = new Array<number>(n);
   groups.forEach((g, k) => g.forEach((i) => { labels[i] = k; }));
   return labels;

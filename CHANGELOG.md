@@ -4,6 +4,18 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [Unreleased]
+
+### Changed
+- Clustering computes pairwise distances once and updates them on each merge
+  (Lance–Williams, average linkage). Same labels, verified on every stored
+  embedding set; a whole meeting clusters in under 100 ms instead of 8 s, which
+  the live path does after every block.
+
+### Added
+- CI measures test coverage on every run, runs CodeQL, and Dependabot keeps
+  dependencies current. A unit test guards the whole-meeting error rate.
+
 ## [0.1.0-rc.1] — 2026-09-15
 
 First version published for people to try. Not a production release.
