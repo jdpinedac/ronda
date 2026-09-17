@@ -4,6 +4,30 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [0.1.0-rc.9] — 2026-09-17
+
+Ninth candidate. The table introduces itself, and names mean something.
+
+### Added
+- A round of introductions on the live page. With names typed, Ronda says whose
+  turn it is, fills a bar with the voice it has collected for them (ten seconds
+  is the target, five the minimum), and moves on when you press Next. What is
+  heard in a person's turn becomes their voice profile and is not counted. From
+  the last Next on, every voice sample goes to the nearest profile and stays
+  there: a name never changes hands, and everyone has a row from the start.
+  Skip the round, or leave anyone under five seconds, and the conversation is
+  grouped exactly as before, with the names as labels. See
+  [ADR 0011](docs/adr/0011-ask-people-to-introduce-themselves.md).
+- `bench/enrol.report.ts` measures the round against the annotated meetings.
+  Introductions of 10 s per person put 96–100 % of scorable speech under the
+  right name; the shipped grouping, with names handed out in order of
+  appearance, managed 1–64 %.
+- The diagnostics export carries the introduction samples apart from the
+  conversation, and the field report says how much voice each profile had.
+
+### Changed
+- Technical details on the live page show the voice collected per person.
+
 ## [0.1.0-rc.8] — 2026-09-17
 
 Eighth candidate. One question instead of two, and honest words about what the
@@ -166,6 +190,7 @@ First version published for people to try. Not a production release.
   under-credited.
 - Not yet tried on a phone at a real table by anyone other than the authors.
 
+[0.1.0-rc.9]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.9
 [0.1.0-rc.8]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.8
 [0.1.0-rc.7]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.7
 [0.1.0-rc.6]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.6
