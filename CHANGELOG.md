@@ -4,6 +4,28 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [0.1.0-rc.8] — 2026-09-17
+
+Eighth candidate. One question instead of two, and honest words about what the
+names mean.
+
+### Changed
+- Names come first on both pages and the head count follows them: type three
+  names and the number reads 3, add a fourth and it reads 4, until you edit the
+  number yourself. The number stays required with fewer than two names, since a
+  single name says nothing about the size of the table (ADR 0004).
+- The hint under the names no longer promises that the first name goes to
+  whoever speaks first or that everyone keeps their name. A field session showed
+  all four names handed out within 17 seconds, to fragments of the first two
+  voices, and 225 samples changing hands over the session. Ronda does not yet
+  recognise who is who, and now says only that.
+
+### Added
+- The field report replays a diagnostics export window by window and prints
+  what the user watched: when each identity (each name) first appeared, how
+  many voices had actually been heard by then, how many samples changed identity
+  between windows, and which final groups each identity held along the way.
+
 ## [0.1.0-rc.7] — 2026-09-16
 
 Seventh candidate. Ronda says when the voices arrive muddled, and what to do.
@@ -144,6 +166,7 @@ First version published for people to try. Not a production release.
   under-credited.
 - Not yet tried on a phone at a real table by anyone other than the authors.
 
+[0.1.0-rc.8]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.8
 [0.1.0-rc.7]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.7
 [0.1.0-rc.6]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.6
 [0.1.0-rc.5]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.5

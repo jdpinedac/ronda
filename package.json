@@ -1,6 +1,6 @@
 {
   "name": "ronda",
-  "version": "0.1.0-rc.7",
+  "version": "0.1.0-rc.8",
   "private": true,
   "type": "module",
   "description": "See who holds the floor. Speaker diarization that runs entirely in your browser.",
