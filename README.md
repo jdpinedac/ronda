@@ -48,10 +48,18 @@ follows, or give the number alone. It will not start without a number. That numb
 matters more than any model parameter: without it the grouping step guesses, and the
 guess gets worse the longer the conversation runs — a four-person meeting reached ten
 "voices" after a quarter of an hour. See
-[ADR 0004](docs/adr/0004-ask-for-the-number-of-people.md). The names are labels: they
-go to the voice groups in the order Ronda forms them, which is not always the order
-people speak in, and a group can change hands while the conversation is being
-re-grouped. Ronda does not yet recognise who is who.
+[ADR 0004](docs/adr/0004-ask-for-the-number-of-people.md).
+
+With names, the live page starts with a round of introductions: it says whose turn it
+is, each person speaks alone for about ten seconds, and what is heard becomes their
+voice profile. From then on every stretch of speech goes to the nearest profile and
+stays there, so a name follows a voice and never changes hands. On the annotated
+meetings this puts 96–100% of scorable speech under the right name; without it, names
+went to the voice groups in the order they happened to form — the right name on 1–64%
+of speech, and groups changing hands as the conversation was re-grouped
+([ADR 0011](docs/adr/0011-ask-people-to-introduce-themselves.md)). Skip the round, and
+the names are labels of groups, nothing more; the file page has no round and its names
+are always labels.
 
 ## What it costs to run
 
@@ -137,6 +145,10 @@ stored embeddings in seconds. Fetch the recordings with `spike/08-fetch-ami.py` 
   Someone who mostly speaks over others is under-credited.
 - When several people talk over each other for a long stretch, Ronda knows it is
   happening but cannot say who else joined in.
+- The introductions fix the names, not the shares. Overlapping and uncertain speech,
+  a tenth to a sixth of a real meeting, still belongs to nobody, and the share error of
+  the long meetings stands. Someone who joins after the round has no profile: their
+  speech goes to whoever they sound most like.
 - It measures speaking time. It does not measure who contributed, who was listening,
   or who was right.
 

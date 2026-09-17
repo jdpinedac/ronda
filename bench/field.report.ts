@@ -34,6 +34,12 @@ describe('field diagnostics', () => {
       `  ${b.format} from Ronda ${b.version}, exported ${b.exportedAt}`,
       `  head count ${b.speakerCount ?? 'none'}, television switch ${b.backgroundVoices ? 'on' : 'off'}, listened ${f1(b.elapsedMs / 60000)} min, ${n} voice samples, ${f1(b.backgroundMs / 1000)} s dropped as distant`];
 
+    if (b.introductions) {
+      const per = new Map<number, number>();
+      b.introductions.profile.forEach((who, i) => per.set(who, (per.get(who) ?? 0) + b.introductions!.durationsMs[i]!));
+      out.push(`  introductions: ${[...per.entries()].sort((a, c) => a[0] - c[0]).map(([who, ms]) => `#${who + 1} ${f1(ms / 1000)}s`).join('  ')} of voice per profile`);
+    }
+
     // As shown on screen.
     const tot = new Map<number, number>();
     b.identities.forEach((id, i) => { if (id !== OTHER_VOICE) tot.set(id, (tot.get(id) ?? 0) + b.durationsMs[i]! + b.creditedMs[i]!); });

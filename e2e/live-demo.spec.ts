@@ -10,9 +10,17 @@ import { test, expect } from '@playwright/test';
  */
 test('live rows keep their colour and name while shares move', async ({ page }) => {
   await page.goto('live.html?demo=1');
-  await page.locator('#count').fill('4');
   await page.locator('#names').fill('Ana, Juan, Marta, Pedro');
+  await expect(page.locator('#count')).toHaveValue('4');
   await page.locator('#toggle').click();
+
+  // With names typed, the table is asked to introduce itself first. Skipping
+  // gives the grouping this test has always exercised.
+  await expect(page.locator('#intro')).toBeVisible();
+  await expect(page.locator('#intro-name')).toHaveText('Ana');
+  await page.locator('#intro-skip').click();
+  await expect(page.locator('#intro')).toBeHidden();
+  await expect(page.locator('#hint')).toContainText(/Sin presentación|Without introductions/);
 
   // Wait for the first update with at least two rows, then sample every few seconds.
   await expect(page.locator('#legend li')).toHaveCount(2, { timeout: 60_000 }).catch(() => undefined);
@@ -84,4 +92,38 @@ test('live rows keep their colour and name while shares move', async ({ page }) 
   await expect(page.locator('#legend li')).toHaveCount(0);
   await expect(page.locator('#center-time')).toHaveText('0:00');
   await expect(page.locator('#count')).toBeEnabled();
+});
+
+/**
+ * The introductions themselves: the first name is up, Next stays disabled
+ * until enough voice has been heard, then the second name is up. The demo
+ * recording is a meeting, not a round of introductions, so the profiles it
+ * builds mean nothing; what is checked is the mechanics, with real audio.
+ */
+test('the introductions go through the names in order and wait for enough voice', async ({ page }) => {
+  await page.goto('live.html?demo=1');
+  await page.locator('#names').fill('Ana, Juan, Marta');
+  await page.locator('#toggle').click();
+
+  await expect(page.locator('#intro')).toBeVisible();
+  await expect(page.locator('#intro-name')).toHaveText('Ana');
+  await expect(page.locator('#intro-next')).toHaveText(/Siguiente|Next/);
+  await expect(page.locator('#badge-text')).toHaveText(/Presentación|Introductions/);
+  // Nothing has been heard yet; the button waits for 5 s of one voice.
+  await expect(page.locator('#intro-next')).toBeDisabled();
+  await expect(page.locator('#legend li')).toHaveCount(0);
+  await expect(page.locator('#intro-next')).toBeEnabled({ timeout: 60_000 });
+  await expect(page.locator('#center-time')).toHaveText('0:00');
+
+  await page.locator('#intro-next').click();
+  await expect(page.locator('#intro-name')).toHaveText('Juan');
+  await expect(page.locator('#intro-next')).toBeDisabled();
+  await page.locator('#intro-next').click({ force: true }).catch(() => undefined);
+  await expect(page.locator('#intro-name')).toHaveText('Juan');
+
+  // No names in the page beyond the text nodes: nothing was built from markup.
+  await page.locator('#intro-skip').click();
+  await expect(page.locator('#intro')).toBeHidden();
+  await page.locator('#toggle').click();
+  await expect(page.locator('#toggle')).toHaveText(/Reanudar|Resume/);
 });

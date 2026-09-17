@@ -110,6 +110,23 @@ const STRINGS = {
     es: 'Los nombres son etiquetas: van a los grupos de voz en el orden en que Ronda los forma, que no siempre es el orden en que habla la gente. Ronda todavía no reconoce quién es quién.',
     en: 'Names are labels: they go to the voice groups in the order Ronda forms them, which is not always the order people speak in. Ronda does not yet recognise who is who.',
   },
+  introducing: { es: 'Presentación', en: 'Introductions' },
+  introLabel: { es: 'Ahora habla', en: 'Now speaking:' },
+  introHint: {
+    es: 'Que hable con naturalidad, sin que nadie más intervenga, unos diez segundos. La barra se llena con unos segundos de retraso. Después, pulsa Siguiente.',
+    en: 'Have them talk naturally, with nobody else chiming in, for about ten seconds. The bar fills a few seconds late. Then press Next.',
+  },
+  introNext: { es: 'Siguiente', en: 'Next' },
+  introStart: { es: 'Empezar a contar', en: 'Start counting' },
+  introSkip: { es: 'Saltar la presentación', en: 'Skip the introductions' },
+  introDoneHint: {
+    es: 'Cada nombre sigue a la voz que se presentó con él, y no cambia de manos.',
+    en: 'Each name follows the voice that introduced itself under it, and never changes hands.',
+  },
+  introSkippedHint: {
+    es: 'Sin presentación, los nombres son etiquetas de grupo y pueden cambiar de manos mientras Ronda reagrupa.',
+    en: 'Without introductions, names are group labels and can change hands while Ronda re-groups.',
+  },
   countFromNamesHint: {
     es: 'Según los nombres. Cambiálo si alguien se va a quedar callado o si hay más gente de la que nombraste.',
     en: 'From the names. Change it if someone will stay silent or there are more people than you named.',

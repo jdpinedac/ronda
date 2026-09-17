@@ -1,5 +1,5 @@
 import { startCapture, startFakeCapture, type Capture } from './audio/capture.js';
-import { startLiveSession, type LiveSession, type LiveState } from './engine/live.js';
+import { startLiveSession, MIN_INTRODUCTION_MS, TARGET_INTRODUCTION_MS, type LiveSession, type LiveState } from './engine/live.js';
 import { loadModels } from './engine/models.js';
 import { createTranslator } from './ui/i18n.js';
 import { currentLocale, mountPrefs } from './ui/prefs.js';
@@ -22,6 +22,9 @@ setText('badge-text', t('waiting'));
 setText('hint', t('tellTheTable'));
 setText('version', `Ronda ${__RONDA_VERSION__}`);
 setText('diagnostics-title', t('technicalDetails'));
+setText('intro-label', t('introLabel'));
+setText('intro-hint', t('introHint'));
+setText('intro-skip', t('introSkip'));
 const footer = document.getElementById('footer');
 if (footer) mountPrefs(footer, locale);
 
@@ -32,6 +35,9 @@ const resetButton = $('reset') as HTMLButtonElement | null;
 const exportButton = $('export') as HTMLButtonElement | null;
 const namesInput = $('names') as HTMLInputElement | null;
 const countInput = $('count') as HTMLInputElement | null;
+const introPanel = $('intro');
+const introNext = $('intro-next') as HTMLButtonElement | null;
+const introSkip = $('intro-skip') as HTMLButtonElement | null;
 
 /**
  * The head count is the one input Ronda insists on. Without it the speaker
@@ -69,6 +75,9 @@ let capture: Capture | null = null;
 /** What the device reported doing to the audio, kept for the diagnostics export. */
 let lastCaptureSettings: Record<string, unknown> | null = null;
 let session: LiveSession | null = null;
+/** Names as typed when the session started; the introductions go through them in order. */
+let sessionNames: string[] = [];
+let introIndex = 0;
 let meterTimer: number | null = null;
 let running = false;
 let wakeLock: WakeLockSentinel | null = null;
@@ -164,14 +173,30 @@ function render(state: LiveState) {
       PALETTE[sp.id % PALETTE.length]!, name, formatTime(sp.totalMs), `${Math.round(sp.share * 100)}%`));
   });
 
+  const introducing = state.phase === 'introductions';
+  if (introPanel) introPanel.hidden = !introducing;
+  if (introducing) {
+    // Whose turn, how much of their voice has arrived, and whether it is enough.
+    const collected = state.introducing?.collectedMs ?? 0;
+    setText('intro-name', sessionNames[introIndex] ?? '');
+    const fill = $('intro-fill');
+    if (fill) fill.style.width = `${Math.min(100, Math.round((100 * collected) / TARGET_INTRODUCTION_MS))}%`;
+    if (introNext) {
+      introNext.disabled = !running || collected < MIN_INTRODUCTION_MS;
+      introNext.textContent = introIndex >= sessionNames.length - 1 ? t('introStart') : t('introNext');
+    }
+  }
+
   const active = state.speakers.find((s) => s.active);
   const badge = $('badge');
   if (badge) {
-    badge.classList.toggle('on', Boolean(active));
+    badge.classList.toggle('on', Boolean(active) || (introducing && running));
     // The verdict is about audio a few seconds old, and says so.
-    const label = active
-      ? `${typed[active.id] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${active.id + 1}`} · ${t('aMomentAgo')}`
-      : (running ? t('listening') : (session ? t('paused') : t('waiting')));
+    const label = introducing
+      ? (running ? t('introducing') : (session ? t('paused') : t('waiting')))
+      : active
+        ? `${typed[active.id] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${active.id + 1}`} · ${t('aMomentAgo')}`
+        : (running ? t('listening') : (session ? t('paused') : t('waiting')));
     setText('badge-text', label);
   }
 
@@ -200,6 +225,7 @@ function render(state: LiveState) {
       <dt>voice clarity (spread, lower is clearer)</dt><dd>${state.spread.toFixed(2)}</dd>
       <dt>listening for</dt><dd>${(state.elapsedMs / 1000).toFixed(0)} s</dd>
       <dt>speaker count from</dt><dd>${state.countHint.source}</dd>
+      <dt>introductions, per person</dt><dd>${state.profilesMs.length ? state.profilesMs.map((ms) => `${(ms / 1000).toFixed(1)} s`).join(', ') : 'none'}</dd>
       <dt>reliability</dt><dd>${state.reliability}</dd>
     </dl>`;
     diagWrap.hidden = false;
@@ -250,12 +276,18 @@ async function start() {
   if (!session) {
     const count = headCount();
     const bgVoices = ($('bg-voices') as HTMLInputElement | null)?.checked ?? false;
+    sessionNames = typedNames();
+    // With names, the table introduces itself first, one person at a time,
+    // so each name is tied to a voice rather than to the order groups form.
+    const introductions = sessionNames.length >= 2 && (count === null || count === sessionNames.length);
     session = await startLiveSession({
-      names: typedNames(),
+      names: sessionNames,
       ...(count !== null ? { speakerCount: count } : {}),
       backgroundVoices: bgVoices,
+      introductions,
     });
     session.onUpdate(render);
+    if (introductions) { introIndex = 0; session.introduce(0); }
   }
   capture.onAudio((samples) => session?.push(samples));
   lastCaptureSettings = capture.settings();
@@ -268,8 +300,9 @@ async function start() {
   if (countInput) countInput.disabled = true;
   setText('toggle', t('stop'));
   toggle?.classList.add('stopping');
-  setText('badge-text', t('listening'));
-  setText('hint', t('firstResultWait'));
+  const introducing = session.state().phase === 'introductions';
+  setText('badge-text', introducing ? t('introducing') : t('listening'));
+  setText('hint', introducing ? t('introHint') : t('firstResultWait'));
   if (toggle) toggle.disabled = false;
 
   const badge = $('badge');
@@ -318,6 +351,9 @@ function afterStopControls() {
 function reset() {
   session?.dispose();
   session = null;
+  sessionNames = [];
+  introIndex = 0;
+  if (introPanel) introPanel.hidden = true;
   const segments = $('segments');
   const legend = $('legend');
   if (segments) segments.innerHTML = '';
@@ -354,6 +390,31 @@ function exportDiagnostics() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/** The next person's turn, or — after the last — the conversation itself. */
+function nextIntroduction() {
+  if (!session || session.state().phase !== 'introductions') return;
+  if (introIndex >= sessionNames.length - 1) {
+    session.startConversation();
+    setText('hint', session.state().countHint.source === 'calibration' ? t('introDoneHint') : t('introSkippedHint'));
+    setText('badge-text', t('listening'));
+  } else {
+    introIndex += 1;
+    session.introduce(introIndex);
+  }
+  render(session.state());
+}
+
+/** Give up on the introductions: the conversation is grouped as before, names as labels. */
+function skipIntroductions() {
+  if (!session || session.state().phase !== 'introductions') return;
+  session.startConversation();
+  setText('hint', t('introSkippedHint'));
+  if (running) setText('badge-text', t('listening'));
+  render(session.state());
+}
+
 toggle?.addEventListener('click', () => { void (running ? stop() : start()); });
+introNext?.addEventListener('click', nextIntroduction);
+introSkip?.addEventListener('click', skipIntroductions);
 resetButton?.addEventListener('click', reset);
 exportButton?.addEventListener('click', exportDiagnostics);
