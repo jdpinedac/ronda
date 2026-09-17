@@ -22,6 +22,7 @@ import {
   DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
 import { rms, selectForeground } from './levels.js';
+import { createProfile, addToProfile, nearestProfile, profileMs, type SpeakerProfile } from './profiles.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
 import { decodeSegmentation, speechSpans, creditOverlap, type Span } from './segmentation.js';
 import { assessReliability, type Reliability } from './diarize.js';
@@ -36,6 +37,15 @@ const WINDOW_MS = 10_000;
 const HOP_MS = 5_000;
 const MIN_SPEECH_MS = 800;
 
+/**
+ * The least voice an introduction must collect for a profile to be trusted.
+ * Measured on the annotated meetings (ADR 0011): 5 s per person already
+ * attributes 94–99 % of the remaining single-speaker speech to the right
+ * name, 10 s 96–100 %; the page asks for 10 and accepts 5.
+ */
+export const MIN_INTRODUCTION_MS = 5_000;
+export const TARGET_INTRODUCTION_MS = 10_000;
+
 export interface LiveSpeaker {
   /** Stable for the whole session: the same person keeps the same id. */
   id: number;
@@ -46,8 +56,16 @@ export interface LiveSpeaker {
   active: boolean;
 }
 
+export type LivePhase = 'introductions' | 'conversation';
+
 export interface LiveState {
   speakers: LiveSpeaker[];
+  /** Introductions are collected before the conversation is counted; see introduce(). */
+  phase: LivePhase;
+  /** Who is introducing themselves right now, and how much voice they have given. */
+  introducing: { index: number; collectedMs: number } | null;
+  /** Voice collected for each named person's profile, in ms. */
+  profilesMs: number[];
   elapsedMs: number;
   /** How far into the audio the verdict reaches; the rest is still being heard. */
   coveredToMs: number;
@@ -96,6 +114,8 @@ export interface DiagnosticsBundle {
   vectors: number[][];
   /** The browser and the audio processing the device reported applying, when known. */
   capture?: CaptureInfo;
+  /** The voice samples that built each profile, kept apart from the conversation. */
+  introductions?: { vectors: number[][]; durationsMs: number[]; profile: number[] };
 }
 
 export interface CaptureInfo {
@@ -117,6 +137,17 @@ export interface LiveSession {
   onUpdate: (handler: (state: LiveState) => void) => void;
   /** Everything the session kept, for reproducing it offline. See DiagnosticsBundle. */
   exportDiagnostics: (meta?: { version?: string; capture?: CaptureInfo }) => DiagnosticsBundle;
+  /**
+   * From now on, what is heard is the voice of the named person at this index
+   * and goes into their profile, not the tally. Only during the introductions.
+   */
+  introduce: (index: number) => void;
+  /**
+   * End the introductions. If every named person gave enough voice, the
+   * conversation is attributed to their profiles and a name never changes
+   * hands; otherwise it is grouped as without introductions.
+   */
+  startConversation: () => void;
   dispose: () => void;
 }
 
@@ -127,16 +158,35 @@ export interface LiveOptions {
   speakerCount?: number;
   /** A television, radio or neighbouring table is audible. See CLUSTER_HEADROOM. */
   backgroundVoices?: boolean;
+  /** Start with a round of introductions, one profile per name. See introduce(). */
+  introductions?: boolean;
 }
 
 export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSession> {
   const { segmentation, embedding } = await loadModels();
 
-  const countHint = resolveSpeakerCount({
+  let countHint = resolveSpeakerCount({
     ...(opts.names !== undefined ? { names: opts.names } : {}),
     ...(opts.calibratedProfiles !== undefined ? { calibratedProfiles: opts.calibratedProfiles } : {}),
     ...(opts.speakerCount !== undefined ? { speakerCount: opts.speakerCount } : {}),
   });
+
+  // The introductions: one profile per name, filled while that person speaks.
+  // Periods are marked in the conversation's clock when introduce() is called,
+  // and each voice sample is routed by where its midpoint falls, so the lag
+  // between hearing audio and analysing it does not matter.
+  const names = (opts.names ?? []).map((n) => n.trim()).filter(Boolean);
+  const profiles: SpeakerProfile[] = names.map(() => createProfile());
+  let phase: 'introductions' | 'conversation' = opts.introductions && profiles.length >= 2 ? 'introductions' : 'conversation';
+  const periods: { index: number; fromMs: number; toMs: number }[] = [];
+  /** Where the conversation proper starts; nothing before it is counted. */
+  let conversationFromMs = 0;
+  /** True once the conversation is attributed to profiles rather than grouped. */
+  let profileMode = false;
+  const introVectors: Float32Array[] = [];
+  const introDurations: number[] = [];
+  const introProfile: number[] = [];
+  const periodAt = (ms: number) => periods.find((p) => ms >= p.fromMs && ms < p.toMs);
 
   /** Audio not yet consumed by a window, starting at bufferStartMs. */
   let buffer = new Float32Array(0);
@@ -218,11 +268,24 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
         backgroundMs += s.endMs - s.startMs;
         continue;
       }
+      const midMs = (s.startMs + s.endMs) / 2;
+      const period = periodAt(midMs);
+      // Heard before the conversation began and outside anyone's turn to
+      // introduce themselves: nobody's, and not counted.
+      if (!period && midMs < conversationFromMs) continue;
       const { frames, numBins } = computeFbank(
         window.subarray(msToSample(s.startMs - windowStartMs), msToSample(s.endMs - windowStartMs)), WESPEAKER_FBANK);
       if (frames.length === 0) continue;
       const raw = await runEmbedding(embedding, frames, frames.length / numBins, numBins);
-      vectors.push(normalise(Float32Array.from(raw)));
+      const vector = normalise(Float32Array.from(raw));
+      if (period) {
+        addToProfile(profiles[period.index]!, vector, s.endMs - s.startMs);
+        introVectors.push(vector);
+        introDurations.push(s.endMs - s.startMs);
+        introProfile.push(period.index);
+        continue;
+      }
+      vectors.push(vector);
       durations.push(s.endMs - s.startMs);
       sampleSpans.push({ startMs: s.startMs, endMs: s.endMs });
       sampleLevels.push(blockLevels[i]!);
@@ -240,9 +303,17 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       if (target >= 0) credited[target] = credited[target]! + (overlaps[oi]!.endMs - overlaps[oi]!.startMs);
     });
 
-    // Re-cluster everything heard so far, so earlier mistakes get corrected —
+    // With profiles, each new sample goes to the nearest one and stays there;
+    // the profile keeps learning from what it is given (ADR 0011). Without,
+    // re-cluster everything heard so far, so earlier mistakes get corrected —
     // and carry each person's identity over, so their colour and name do not.
-    if (vectors.length > 0) {
+    if (profileMode) {
+      for (let i = identities.length; i < vectors.length; i++) {
+        const hit = nearestProfile(vectors[i]!, profiles)!;
+        identities.push(hit.index);
+        addToProfile(profiles[hit.index]!, vectors[i]!, durations[i]!);
+      }
+    } else if (vectors.length > 0) {
       const labels = countHint.k !== null
         ? clusterKnownCount(centreEmbeddings(vectors), countHint.k)
         : absorbTinyClusters(
@@ -316,8 +387,14 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       cur.segments += 1;
       byId.set(l, cur);
     });
+    // Everyone who introduced themselves has a row from the start.
+    if (profileMode) profiles.forEach((_, id) => { if (!byId.has(id)) byId.set(id, { totalMs: 0, segments: 0 }); });
     const spokenMs = [...byId.values()].reduce((s, v) => s + v.totalMs, 0);
     const clarity = vectors.length > 0 ? assessClarity(centreEmbeddings(vectors), identities, durations) : { spread: 0, clear: true };
+    const current = periods[periods.length - 1];
+    const introducing = phase === 'introductions' && current && current.toMs === Infinity
+      ? { index: current.index, collectedMs: profileMs(profiles[current.index]!) }
+      : null;
     const speakers: LiveSpeaker[] = [...byId.entries()]
       .map(([id, v]) => ({
         id,
@@ -330,6 +407,9 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
 
     return {
       speakers,
+      phase,
+      introducing,
+      profilesMs: profiles.map(profileMs),
       elapsedMs,
       coveredToMs: trustedToMs,
       spokenMs,
@@ -384,7 +464,31 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       identities: [...identities],
       vectors: vectors.map((v) => Array.from(v, (x) => Math.round(x * 1e4) / 1e4)),
       ...(meta.capture ? { capture: meta.capture } : {}),
+      ...(introVectors.length > 0 ? {
+        introductions: {
+          vectors: introVectors.map((v) => Array.from(v, (x) => Math.round(x * 1e4) / 1e4)),
+          durationsMs: [...introDurations],
+          profile: [...introProfile],
+        },
+      } : {}),
     }),
+    introduce: (index) => {
+      if (phase !== 'introductions' || index < 0 || index >= profiles.length) return;
+      const current = periods[periods.length - 1];
+      if (current && current.toMs === Infinity) current.toMs = elapsedMs;
+      periods.push({ index, fromMs: elapsedMs, toMs: Infinity });
+    },
+    startConversation: () => {
+      if (phase !== 'introductions') return;
+      const current = periods[periods.length - 1];
+      if (current && current.toMs === Infinity) current.toMs = elapsedMs;
+      conversationFromMs = elapsedMs;
+      phase = 'conversation';
+      // Profiles are trusted only when everyone named gave enough voice;
+      // otherwise the conversation is grouped exactly as without them.
+      profileMode = profiles.length >= 2 && profiles.every((p) => profileMs(p) >= MIN_INTRODUCTION_MS);
+      if (profileMode) countHint = resolveSpeakerCount({ calibratedProfiles: profiles.length });
+    },
     dispose: () => { buffer = new Float32Array(0); handlers.length = 0; disposed = true; },
   };
 }
