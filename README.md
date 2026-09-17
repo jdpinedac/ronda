@@ -177,9 +177,11 @@ is not built for assessing individuals, and it would be bad at it.
     npm run bench          # real pipeline against real recordings; see bench/
     npm run bench:offline  # clustering experiments on stored embeddings, seconds
 
-Requires Node 22+. The `onnxruntime-web` WASM binaries are copied into `public/ort/`
-by `scripts/sync-ort-wasm.mjs`, which runs automatically before `dev` and `build`;
-they are not committed.
+Requires Node 22+. The model weights are downloaded into `public/models/` by
+`scripts/fetch-models.mjs`, which runs automatically before `dev` and `build` and checks
+each file against its published SHA-256; they are not committed. The `onnxruntime-web`
+WASM runtime is bundled by Vite from the `onnxruntime-web/wasm` subpath, so nothing else
+needs copying.
 
 Cross-origin isolation is needed for multi-threaded WASM. The dev server sets the
 headers itself; GitHub Pages cannot, so production restores it with

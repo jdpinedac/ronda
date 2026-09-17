@@ -23,8 +23,8 @@ export default defineConfig({
     },
   },
   worker: { format: 'es' },
-  // onnxruntime-web loads its .wasm binaries at runtime from public/ort/,
-  // populated by scripts/sync-ort-wasm.mjs. Keep them out of the bundle.
+  // onnxruntime-web is imported lazily from its /wasm subpath (see
+  // src/engine/models.ts); pre-bundling it would pull the whole package in.
   optimizeDeps: { exclude: ['onnxruntime-web'] },
   server: {
     headers: {
