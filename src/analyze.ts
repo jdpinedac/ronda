@@ -2,6 +2,7 @@ import { diarize, type DiarizationResult } from './engine/diarize.js';
 import { loadModels, SAMPLE_RATE } from './engine/models.js';
 import { createTranslator } from './ui/i18n.js';
 import { currentLocale, mountPrefs } from './ui/prefs.js';
+import { parseNames, nextCountValue } from './ui/headcount.js';
 
 const locale = currentLocale();
 const t = createTranslator(locale);
@@ -42,13 +43,22 @@ function headCount(): number | null {
   const n = Number(countInput?.value);
   return Number.isInteger(n) && n >= 2 ? n : null;
 }
-const typedNames = () => (namesInput?.value ?? '').split(',').map((n) => n.trim()).filter(Boolean);
+const typedNames = () => parseNames(namesInput?.value ?? '');
 function refreshReady() {
   if (goButton) goButton.disabled = !chosen || headCount() === null;
 }
-countInput?.addEventListener('input', refreshReady);
+// The count follows the names until the user takes the number over; see headcount.ts.
+let countEdited = false;
+countInput?.addEventListener('input', () => {
+  countEdited = countInput.value !== '';
+  setText('count-hint', t('countHint'));
+  refreshReady();
+});
 namesInput?.addEventListener('input', () => {
-  if (countInput && !countInput.value && typedNames().length >= 2) countInput.value = String(typedNames().length);
+  if (countInput) {
+    countInput.value = nextCountValue({ names: typedNames(), current: countInput.value, edited: countEdited });
+    setText('count-hint', countInput.value && !countEdited ? t('countFromNamesHint') : t('countHint'));
+  }
   refreshReady();
 });
 

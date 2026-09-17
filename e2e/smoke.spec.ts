@@ -41,6 +41,16 @@ test('the live page insists on a head count before listening', async ({ page }) 
   await page.locator('#names').fill('Ana, Juan, Marta');
   await expect(page.locator('#count')).toHaveValue('3');
   await expect(listen).toBeEnabled();
+  await expect(page.locator('#count-hint')).toContainText(/From the names|Según los nombres/);
+
+  // The count keeps following the names…
+  await page.locator('#names').fill('Ana, Juan, Marta, Pedro');
+  await expect(page.locator('#count')).toHaveValue('4');
+
+  // …until the user takes the number over.
+  await page.locator('#count').fill('5');
+  await page.locator('#names').fill('Ana, Juan');
+  await expect(page.locator('#count')).toHaveValue('5');
 
   await page.locator('#count').fill('1');
   await expect(listen).toBeDisabled();

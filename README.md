@@ -43,13 +43,15 @@ turns each stretch of speech into an embedding, trained so that the same person'
 voice lands in the same place regardless of volume, mood, or language. Grouping those
 embeddings gives you the speakers.
 
-Before it starts, Ronda asks how many people are at the table, and it will not start
-without an answer. That number matters more than any model parameter: without it the
-grouping step guesses, and the guess gets worse the longer the conversation runs — a
-four-person meeting reached ten "voices" after a quarter of an hour. See
-[ADR 0004](docs/adr/0004-ask-for-the-number-of-people.md). Names can be typed too:
-the first goes to whoever speaks first, and everyone keeps their name and colour for
-the session. Ronda does not yet recognise who is who.
+Before it starts, Ronda asks who is at the table: type the names and the head count
+follows, or give the number alone. It will not start without a number. That number
+matters more than any model parameter: without it the grouping step guesses, and the
+guess gets worse the longer the conversation runs — a four-person meeting reached ten
+"voices" after a quarter of an hour. See
+[ADR 0004](docs/adr/0004-ask-for-the-number-of-people.md). The names are labels: they
+go to the voice groups in the order Ronda forms them, which is not always the order
+people speak in, and a group can change hands while the conversation is being
+re-grouped. Ronda does not yet recognise who is who.
 
 ## What it costs to run
 

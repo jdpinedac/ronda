@@ -5,6 +5,8 @@
  * clustering on the same samples gives the same groups. Then what a different
  * head count would have done, and whether any person is spread over two
  * groups — the signature of a dominant speaker being mistaken for someone else.
+ * Finally what the user watched: the session replayed window by window, with
+ * when each identity (each name) appeared and how often samples changed hands.
  *
  *     FILE=~/Downloads/ronda-diagnostics-2026-09-16-18-05-00.json npm run bench -- bench/field.report.ts
  */
@@ -15,6 +17,7 @@ import {
   agglomerative, centreEmbeddings, keepBusiest, placeSplinters, splinterHeadroom, carryIdentities,
   cosineDistance, normalise, OTHER_VOICE,
 } from '../src/engine/clustering.js';
+import { replayLive } from './replay.js';
 
 const file = process.env.FILE;
 const f1 = (x: number) => x.toFixed(1);
@@ -71,6 +74,21 @@ describe('field diagnostics', () => {
       const groups = new Map<number, Map<number, number>>();
       alt.forEach((g, i) => { const m = groups.get(g) ?? new Map<number, number>(); m.set(b.identities[i]!, (m.get(b.identities[i]!) ?? 0) + w[i]!); groups.set(g, m); });
       out.push(`  with ${kk} people instead: ${[...groups.values()].map((m) => '{' + [...m.entries()].sort((a, c) => c[1] - a[1]).map(([id, ms]) => `#${id + 1}:${f1(ms / 1000)}s`).join(' ') + '}').join('  ')}`);
+    }
+    // What the screen did over time. The export has final identities only;
+    // the replay recovers when each was minted and how much they churned.
+    const r = replayLive(b);
+    const agreeReplay = r.identities.filter((x, i) => x === b.identities[i]).length;
+    out.push(`  replay of the session: ${agreeReplay}/${n} final identities as exported`);
+    const first = [...r.firstSeenMs.entries()].sort((a, c) => a[1] - c[1]);
+    out.push(`  identities first appeared at: ${first.map(([id, ms]) => `#${id + 1} ${f1(ms / 1000)}s`).join('  ')}`);
+    const spoken = new Set<number>();
+    const peopleBy = (ms: number) => { b.spans.forEach((s, i) => { if (s.endMs <= ms) spoken.add(b.identities[i]!); }); return spoken.size; };
+    const lastMinted = first[first.length - 1]?.[1] ?? 0;
+    out.push(`  by then, samples of ${peopleBy(lastMinted)} distinct final groups had been heard: ${first.length > peopleBy(lastMinted) ? 'names were handed to fragments of the same voice' : 'each identity had its own voice'}`);
+    out.push(`  samples that changed identity between windows: ${r.relabelled} (over ${n} samples)`);
+    for (const [id, held] of [...r.heldFinal.entries()].sort((a, c) => a[0] - c[0])) {
+      out.push(`  identity #${id + 1} held, at some point, samples that ended in: ${[...held].sort((a, c) => a - c).map((x) => `#${x + 1}`).join(' ')}`);
     }
     console.log(out.join('\n'));
   });

@@ -3,6 +3,7 @@ import { startLiveSession, type LiveSession, type LiveState } from './engine/liv
 import { loadModels } from './engine/models.js';
 import { createTranslator } from './ui/i18n.js';
 import { currentLocale, mountPrefs } from './ui/prefs.js';
+import { parseNames, nextCountValue } from './ui/headcount.js';
 
 const locale = currentLocale();
 const t = createTranslator(locale);
@@ -43,15 +44,24 @@ function headCount(): number | null {
   return Number.isInteger(n) && n >= 2 ? n : null;
 }
 
-const typedNames = () => (namesInput?.value ?? '').split(',').map((n) => n.trim()).filter(Boolean);
+const typedNames = () => parseNames(namesInput?.value ?? '');
 
 function refreshReady() {
   if (toggle && !running) toggle.disabled = headCount() === null;
 }
-countInput?.addEventListener('input', refreshReady);
-// Typing names is a natural way to say how many there are; offer it as the count.
+// One question asked two ways: the count follows the names until the user
+// takes the number over. See headcount.ts.
+let countEdited = false;
+countInput?.addEventListener('input', () => {
+  countEdited = countInput.value !== '';
+  setText('count-hint', t('countHint'));
+  refreshReady();
+});
 namesInput?.addEventListener('input', () => {
-  if (countInput && !countInput.value && typedNames().length >= 2) countInput.value = String(typedNames().length);
+  if (countInput) {
+    countInput.value = nextCountValue({ names: typedNames(), current: countInput.value, edited: countEdited });
+    setText('count-hint', countInput.value && !countEdited ? t('countFromNamesHint') : t('countHint'));
+  }
   refreshReady();
 });
 

@@ -107,8 +107,12 @@ const STRINGS = {
   chooseFile: { es: 'Elegir archivo', en: 'Choose file' },
   analyse: { es: 'Analizar', en: 'Analyse' },
   namesHint: {
-    es: 'El primer nombre va a quien habla primero, y cada quien conserva su nombre y color. Ronda todavía no reconoce quién es quién.',
-    en: 'The first name goes to whoever speaks first, and everyone keeps their name and colour. Ronda does not yet recognise who is who.',
+    es: 'Los nombres son etiquetas: van a los grupos de voz en el orden en que Ronda los forma, que no siempre es el orden en que habla la gente. Ronda todavía no reconoce quién es quién.',
+    en: 'Names are labels: they go to the voice groups in the order Ronda forms them, which is not always the order people speak in. Ronda does not yet recognise who is who.',
+  },
+  countFromNamesHint: {
+    es: 'Según los nombres. Cambiálo si alguien se va a quedar callado o si hay más gente de la que nombraste.',
+    en: 'From the names. Change it if someone will stay silent or there are more people than you named.',
   },
   segmenting: { es: 'Buscando dónde habla cada quien…', en: 'Finding who speaks where…' },
   identifying: { es: 'Comparando las voces…', en: 'Comparing voices…' },
