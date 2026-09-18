@@ -92,7 +92,7 @@ describe('a round of introductions', () => {
           enrolIdx.get(t)!.push(i); got.set(t, got.get(t)! + w[i]!); enrolled.add(i);
         }
         const short = people.filter((p) => got.get(p)! < N * 1000);
-        for (const space of ['raw', 'centred'] as const) for (const mode of ['fixed', 'online', 'online+sweep'] as const) {
+        for (const space of ['raw', 'centred'] as const) for (const mode of ['fixed', 'online', 'gated≤0.75', 'online+sweep'] as const) {
           const X = space === 'raw' ? V : C;
           const profiles: SpeakerProfile[] = people.map((p) => { const pr = createProfile(); for (const i of enrolIdx.get(p)!) addToProfile(pr, X[i]!, w[i]!); return pr; });
           const labels = new Array<number>(n);
@@ -100,7 +100,7 @@ describe('a round of introductions', () => {
             if (enrolled.has(i)) { labels[i] = people.indexOf(truth[i]!); continue; }
             const hit = nearestProfile(X[i]!, profiles)!;
             labels[i] = hit.index;
-            if (mode !== 'fixed') addToProfile(profiles[hit.index]!, X[i]!, w[i]!);
+            if (mode === 'online' || mode === 'online+sweep' || (mode === 'gated≤0.75' && hit.distance <= 0.75)) addToProfile(profiles[hit.index]!, X[i]!, w[i]!);
           }
           if (mode === 'online+sweep') for (let i = 0; i < n; i++) if (!enrolled.has(i)) labels[i] = nearestProfile(X[i]!, profiles)!.index;
           const acc = accuracyWith(labels, (l) => people[l], (i) => !enrolled.has(i));

@@ -23,6 +23,7 @@ import {
 } from './clustering.js';
 import { rms, selectForeground } from './levels.js';
 import { createProfile, addToProfile, nearestProfile, profileMs, type SpeakerProfile } from './profiles.js';
+import { NewVoiceWatch } from './newcomer.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
 import { decodeSegmentation, speechSpans, creditOverlap, type Span } from './segmentation.js';
 import { assessReliability, type Reliability } from './diarize.js';
@@ -46,6 +47,39 @@ const MIN_SPEECH_MS = 800;
 export const MIN_INTRODUCTION_MS = 5_000;
 export const TARGET_INTRODUCTION_MS = 10_000;
 
+/**
+ * A profile learns only from samples clearly its own. Measured in
+ * bench/enrol.report.ts: gating at 0.75 leaves attribution accuracy unchanged
+ * on every annotated meeting, and it keeps a profile from drifting towards a
+ * voice that never introduced itself (bench/newcomer.report.ts, ADR 0012).
+ */
+export const LEARN_DISTANCE = 0.75;
+/** A run of samples this far from every profile is logged; see NewVoiceWatch. */
+const FAR_RUN = { farDistance: 0.75, minSamples: 3, minMs: 4_000, withinMs: 60_000 };
+
+/**
+ * Audio is kept only until the window that needs it has been analysed. If
+ * analysis stalls, the oldest audio is let go rather than piling up: a
+ * session that stopped hearing must not also eat the browser's memory.
+ */
+export const MAX_BUFFER_MS = 120_000;
+/** A window that fails this many times in a row is skipped, and the failure logged. */
+const MAX_FAILURES_PER_WINDOW = 3;
+/** The log keeps the most recent entries; a window entry every 5 s, this is over five hours. */
+const MAX_LOG = 4_000;
+
+export type LiveEventKind =
+  | 'window' | 'error' | 'skipped' | 'dropped' | 'recovered' | 'capture'
+  | 'far-run' | 'person-added' | 'introduction';
+
+/** One thing that happened in the session, for the diagnostics export. */
+export interface LiveEvent {
+  kind: LiveEventKind;
+  /** Conversation clock, ms. */
+  atMs: number;
+  detail?: string;
+}
+
 export interface LiveSpeaker {
   /** Stable for the whole session: the same person keeps the same id. */
   id: number;
@@ -67,6 +101,10 @@ export interface LiveState {
   /** Voice collected for each named person's profile, in ms. */
   profilesMs: number[];
   elapsedMs: number;
+  /** Audio heard and not yet analysed. */
+  bufferedMs: number;
+  /** What happened, most recent last. See LiveEvent. */
+  log: readonly LiveEvent[];
   /** How far into the audio the verdict reaches; the rest is still being heard. */
   coveredToMs: number;
   spokenMs: number;
@@ -116,6 +154,8 @@ export interface DiagnosticsBundle {
   capture?: CaptureInfo;
   /** The voice samples that built each profile, kept apart from the conversation. */
   introductions?: { vectors: number[][]; durationsMs: number[]; profile: number[] };
+  /** What happened during the session: windows, errors, drops, what the capture reported. */
+  log?: LiveEvent[];
 }
 
 export interface CaptureInfo {
@@ -148,6 +188,21 @@ export interface LiveSession {
    * hands; otherwise it is grouped as without introductions.
    */
   startConversation: () => void;
+  /** Close an introduction started mid-conversation; attribution resumes. */
+  endIntroduction: () => void;
+  /**
+   * Someone joined. Adds a profile (and a row) for them and returns its
+   * index; call introduce() with it while they speak. Without profiles, it
+   * raises the head count by one.
+   */
+  addPerson: (name?: string) => number;
+  /**
+   * Analysis has stalled: let go of whatever it was waiting on, keep the
+   * most recent audio, and start again from there.
+   */
+  recover: () => void;
+  /** Record something the page observed, such as the capture being suspended. */
+  note: (kind: 'capture', detail: string) => void;
   dispose: () => void;
 }
 
@@ -187,6 +242,18 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
   const introDurations: number[] = [];
   const introProfile: number[] = [];
   const periodAt = (ms: number) => periods.find((p) => ms >= p.fromMs && ms < p.toMs);
+  const watch = new NewVoiceWatch(FAR_RUN);
+
+  const log: LiveEvent[] = [];
+  const record = (kind: LiveEventKind, detail?: string) => {
+    log.push({ kind, atMs: Math.round(elapsedMs), ...(detail !== undefined ? { detail } : {}) });
+    if (log.length > MAX_LOG) log.splice(0, log.length - MAX_LOG);
+  };
+  /** Failures of the window currently at the head of the queue. */
+  let failures = 0;
+  /** Bumped by recover(); an analysis from an earlier generation is ignored when it finally returns. */
+  let generation = 0;
+  let dropping = false;
 
   /** Audio not yet consumed by a window, starting at bufferStartMs. */
   let buffer = new Float32Array(0);
@@ -239,7 +306,9 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     const window = buffer.slice(from, to);
     const windowMs = windowEndMs - windowStartMs;
 
+    const gen = generation;
     const logits = await runSegmentation(segmentation, window);
+    if (gen !== generation) return;
     const spans: Span[] = [];
     for (const s of decodeSegmentation(logits, SEGMENTATION_CLASSES, windowMs)) {
       const startMs = Math.max(s.startMs + windowStartMs, trustFromMs);
@@ -277,6 +346,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
         window.subarray(msToSample(s.startMs - windowStartMs), msToSample(s.endMs - windowStartMs)), WESPEAKER_FBANK);
       if (frames.length === 0) continue;
       const raw = await runEmbedding(embedding, frames, frames.length / numBins, numBins);
+      if (gen !== generation) return;
       const vector = normalise(Float32Array.from(raw));
       if (period) {
         addToProfile(profiles[period.index]!, vector, s.endMs - s.startMs);
@@ -311,7 +381,12 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       for (let i = identities.length; i < vectors.length; i++) {
         const hit = nearestProfile(vectors[i]!, profiles)!;
         identities.push(hit.index);
-        addToProfile(profiles[hit.index]!, vectors[i]!, durations[i]!);
+        if (hit.distance <= LEARN_DISTANCE) addToProfile(profiles[hit.index]!, vectors[i]!, durations[i]!);
+        const far = watch.observe({ at: sampleSpans[i]!.startMs, ms: durations[i]!, distance: hit.distance, index: i });
+        if (far) {
+          record('far-run', `${far.run.length} samples, ${Math.round(far.run.reduce((a, r) => a + r.ms, 0) / 1000)} s, since ${Math.round(far.sinceMs / 1000)} s`);
+          watch.dismiss();
+        }
       }
     } else if (vectors.length > 0) {
       const labels = countHint.k !== null
@@ -329,6 +404,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     // did no better; ADR 0008 has the numbers and where the limit really is.
     lastSpeaker = heard !== null ? (identities[heard] ?? null) : null;
     trustedToMs = Math.max(trustedToMs, trustToMs);
+    record('window', `${Math.round(windowStartMs / 1000)}-${Math.round(windowEndMs / 1000)} s, ${usable.length} spans`);
   }
 
   /** Every window whose audio is complete, in order; then drop what no later window needs. */
@@ -342,7 +418,21 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
         // both cover, as in windows.ts: 2.5 s in from each edge.
         const trustFromMs = startMs === stretchStartMs ? startMs : startMs + (WINDOW_MS - HOP_MS) / 2;
         const trustToMs = startMs + WINDOW_MS - (WINDOW_MS - HOP_MS) / 2;
-        await analyse(startMs, startMs + WINDOW_MS, trustFromMs, trustToMs);
+        const gen = generation;
+        try {
+          await analyse(startMs, startMs + WINDOW_MS, trustFromMs, trustToMs);
+          if (gen !== generation) return;
+          failures = 0;
+          dropping = false;
+        } catch (err) {
+          if (gen !== generation) return;
+          failures++;
+          record('error', `window ${Math.round(startMs / 1000)} s: ${err instanceof Error ? err.message : String(err)}`);
+          // A window that keeps failing is skipped rather than retried for ever.
+          if (failures < MAX_FAILURES_PER_WINDOW) continue;
+          record('skipped', `window ${Math.round(startMs / 1000)} s after ${failures} failures`);
+          failures = 0;
+        }
         nextWindowStartMs += HOP_MS;
         const dropMs = nextWindowStartMs - bufferStartMs;
         if (dropMs > 0) { buffer = buffer.slice(msToSample(dropMs)); bufferStartMs = nextWindowStartMs; }
@@ -392,7 +482,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     const spokenMs = [...byId.values()].reduce((s, v) => s + v.totalMs, 0);
     const clarity = vectors.length > 0 ? assessClarity(centreEmbeddings(vectors), identities, durations) : { spread: 0, clear: true };
     const current = periods[periods.length - 1];
-    const introducing = phase === 'introductions' && current && current.toMs === Infinity
+    const introducing = current && current.toMs === Infinity
       ? { index: current.index, collectedMs: profileMs(profiles[current.index]!) }
       : null;
     const speakers: LiveSpeaker[] = [...byId.entries()]
@@ -411,6 +501,8 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       introducing,
       profilesMs: profiles.map(profileMs),
       elapsedMs,
+      bufferedMs: buffer.length / SAMPLE_RATE * 1000,
+      log,
       coveredToMs: trustedToMs,
       spokenMs,
       reliability: assessReliability(vectors.length, speakers.length),
@@ -433,6 +525,17 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       joined.set(samples, buffer.length);
       buffer = joined;
       elapsedMs += (samples.length / SAMPLE_RATE) * 1000;
+      // Analysis has fallen behind: let the oldest audio go. The next window
+      // starts where the kept audio starts, trusted from its start as a new stretch.
+      const excessMs = buffer.length / SAMPLE_RATE * 1000 - MAX_BUFFER_MS;
+      if (excessMs > 0) {
+        const dropSamples = msToSample(excessMs);
+        buffer = buffer.slice(dropSamples);
+        bufferStartMs += (dropSamples / SAMPLE_RATE) * 1000;
+        nextWindowStartMs = Math.max(nextWindowStartMs, bufferStartMs);
+        stretchStartMs = nextWindowStartMs;
+        if (!dropping) { record('dropped', `analysis behind; audio before ${Math.round(bufferStartMs / 1000)} s let go`); dropping = true; }
+      }
       void pump();
     },
     flush: async () => {
@@ -471,13 +574,44 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
           profile: [...introProfile],
         },
       } : {}),
+      log: log.map((e) => ({ ...e })),
     }),
     introduce: (index) => {
-      if (phase !== 'introductions' || index < 0 || index >= profiles.length) return;
+      if ((phase !== 'introductions' && !profileMode) || index < 0 || index >= profiles.length) return;
       const current = periods[periods.length - 1];
       if (current && current.toMs === Infinity) current.toMs = elapsedMs;
       periods.push({ index, fromMs: elapsedMs, toMs: Infinity });
+      record('introduction', `#${index + 1} from ${Math.round(elapsedMs / 1000)} s`);
     },
+    endIntroduction: () => {
+      const current = periods[periods.length - 1];
+      if (current && current.toMs === Infinity) current.toMs = elapsedMs;
+    },
+    addPerson: (name) => {
+      profiles.push(createProfile());
+      names.push((name ?? '').trim());
+      const index = profiles.length - 1;
+      if (profileMode) countHint = resolveSpeakerCount({ calibratedProfiles: profiles.length });
+      else if (countHint.k !== null) countHint = { ...countHint, k: countHint.k + 1 };
+      record('person-added', `#${index + 1} at ${Math.round(elapsedMs / 1000)} s`);
+      return index;
+    },
+    recover: () => {
+      generation++;
+      analysing = false;
+      failures = 0;
+      // Keep the last window's worth of audio and start a new stretch there.
+      const keepMs = Math.min(WINDOW_MS, buffer.length / SAMPLE_RATE * 1000);
+      const dropSamples = buffer.length - msToSample(keepMs);
+      if (dropSamples > 0) { buffer = buffer.slice(dropSamples); bufferStartMs += (dropSamples / SAMPLE_RATE) * 1000; }
+      nextWindowStartMs = bufferStartMs;
+      stretchStartMs = bufferStartMs;
+      trustedToMs = Math.max(trustedToMs, bufferStartMs);
+      dropping = false;
+      record('recovered', `from ${Math.round(bufferStartMs / 1000)} s`);
+      void pump();
+    },
+    note: (kind, detail) => { record(kind, detail); },
     startConversation: () => {
       if (phase !== 'introductions') return;
       const current = periods[periods.length - 1];
