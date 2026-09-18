@@ -42,6 +42,10 @@ export interface Capture {
   level: () => number;
   /** What the device says it is doing to the audio: noise suppression, gain control, sample rate… */
   settings: () => Record<string, unknown>;
+  /** Fires when the audio context changes state or the microphone track is muted, unmuted or ended. */
+  onEvent: (handler: (detail: string) => void) => void;
+  /** Nudges a suspended audio context back into motion; harmless when it is running. */
+  resume: () => Promise<void>;
   stop: () => Promise<void>;
 }
 
@@ -103,8 +107,22 @@ export async function startCapture(): Promise<Capture> {
     for (const h of handlers) h(e.data);
   };
 
+  // What the browser does to the capture behind our back — suspends the
+  // context, mutes or ends the track — is exactly what a session that
+  // "stopped hearing" needs recorded.
+  const eventHandlers: ((detail: string) => void)[] = [];
+  const emit = (detail: string) => { for (const h of eventHandlers) h(detail); };
+  ctx.onstatechange = () => emit(`context ${ctx.state}`);
+  for (const track of stream.getAudioTracks()) {
+    track.onended = () => emit('track ended');
+    track.onmute = () => emit('track muted');
+    track.onunmute = () => emit('track unmuted');
+  }
+
   return {
     onAudio: (handler) => { handlers.push(handler); },
+    onEvent: (handler) => { eventHandlers.push(handler); },
+    resume: async () => { if (ctx.state === 'suspended') await ctx.resume(); },
     settings: () => ({ ...(stream.getAudioTracks()[0]?.getSettings() ?? {}) }),
     level: () => {
       analyser.getFloatTimeDomainData(levelBuf);
@@ -162,6 +180,8 @@ export async function startFakeCapture(audio: Float32Array): Promise<Capture> {
   };
   return {
     onAudio: (h) => { handlers.push(h); },
+    onEvent: () => {},
+    resume: async () => { if (ctx.state === 'suspended') await ctx.resume(); },
     settings: () => ({ fake: true }),
     level: () => 0.5,
     stop: async () => { node.disconnect(); source.disconnect(); await ctx.close(); },

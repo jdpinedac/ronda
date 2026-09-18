@@ -54,7 +54,7 @@ export class NewVoiceWatch {
   observe(o: Observation): NewVoiceSuggestion | null {
     if (o.distance <= this.rule.farDistance) return null;
     if (o.at < this.dismissedUntil) { this.dismissedUntil = o.at + QUIET_AFTER_DISMISS_MS; return null; }
-    const { distance: _d, ...sample } = o;
+    const sample: FarSample = { at: o.at, ms: o.ms, ...(o.index !== undefined ? { index: o.index } : {}), ...(o.meta !== undefined ? { meta: o.meta } : {}) };
     this.run = this.run.filter((s) => o.at - s.at <= this.rule.withinMs);
     this.run.push(sample);
     const ms = this.run.reduce((a, s) => a + s.ms, 0);

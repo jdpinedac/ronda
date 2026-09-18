@@ -81,8 +81,27 @@ describe('field diagnostics', () => {
       alt.forEach((g, i) => { const m = groups.get(g) ?? new Map<number, number>(); m.set(b.identities[i]!, (m.get(b.identities[i]!) ?? 0) + w[i]!); groups.set(g, m); });
       out.push(`  with ${kk} people instead: ${[...groups.values()].map((m) => '{' + [...m.entries()].sort((a, c) => c[1] - a[1]).map(([id, ms]) => `#${id + 1}:${f1(ms / 1000)}s`).join(' ') + '}').join('  ')}`);
     }
-    // What the screen did over time. The export has final identities only;
-    // the replay recovers when each was minted and how much they churned.
+    // What the session itself recorded, when the export has it (rc.10+).
+    if (b.log && b.log.length > 0) {
+      const count = (kind: string) => b.log!.filter((e) => e.kind === kind).length;
+      const first = (kind: string) => b.log!.find((e) => e.kind === kind);
+      out.push(`  log: ${count('window')} windows, ${count('error')} errors, ${count('skipped')} skipped, ${count('dropped')} drops, ${count('recovered')} recoveries, ${count('capture')} capture events, ${count('far-run')} far runs, ${count('person-added')} people added`);
+      for (const kind of ['error', 'skipped', 'dropped', 'recovered', 'capture'] as const) {
+        const e = first(kind);
+        if (e) out.push(`    first ${kind} at ${f1(e.atMs / 1000)} s: ${e.detail ?? ''}`);
+      }
+      for (const e of b.log.filter((x) => x.kind === 'far-run' || x.kind === 'person-added' || x.kind === 'introduction')) out.push(`    ${e.kind} at ${f1(e.atMs / 1000)} s: ${e.detail ?? ''}`);
+    }
+
+    // What the screen did over time. With profiles, identities are fixed by
+    // construction and there is nothing to replay; without them, the export
+    // has final identities only and the replay recovers when each was minted
+    // and how much they churned.
+    if (b.introductions) {
+      out.push('  identities: attributed to profiles, fixed by construction; no replay');
+      console.log(out.join('\n'));
+      return;
+    }
     const r = replayLive(b);
     const agreeReplay = r.identities.filter((x, i) => x === b.identities[i]).length;
     out.push(`  replay of the session: ${agreeReplay}/${n} final identities as exported`);

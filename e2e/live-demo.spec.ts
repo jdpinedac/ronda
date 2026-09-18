@@ -121,9 +121,31 @@ test('the introductions go through the names in order and wait for enough voice'
   await page.locator('#intro-next').click({ force: true }).catch(() => undefined);
   await expect(page.locator('#intro-name')).toHaveText('Juan');
 
-  // No names in the page beyond the text nodes: nothing was built from markup.
-  await page.locator('#intro-skip').click();
+  // Finish the round: Juan, then Marta, then the conversation is counted
+  // against the three profiles and "someone joined" becomes available.
+  await expect(page.locator('#intro-next')).toBeEnabled({ timeout: 60_000 });
+  await page.locator('#intro-next').click();
+  await expect(page.locator('#intro-name')).toHaveText('Marta');
+  await expect(page.locator('#intro-next')).toBeEnabled({ timeout: 60_000 });
+  await expect(page.locator('#intro-next')).toHaveText(/Empezar a contar|Start counting/);
+  await page.locator('#intro-next').click();
   await expect(page.locator('#intro')).toBeHidden();
+  await expect(page.locator('#legend li')).toHaveCount(3);
+  await expect(page.locator('#add-wrap')).toBeVisible();
+
+  // Someone joins: a fourth row, and their turn to introduce themselves.
+  await page.locator('#add-person').click();
+  await page.locator('#add-name').fill('<i>Pedro</i>');
+  await page.locator('#add-go').click();
+  await expect(page.locator('#intro')).toBeVisible();
+  await expect(page.locator('#intro-name')).toHaveText('<i>Pedro</i>');
+  expect(await page.locator('#intro i').count()).toBe(0);
+  await expect(page.locator('#intro-next')).toHaveText(/Listo|Done/);
+  await page.locator('#intro-next').click();
+  await expect(page.locator('#intro')).toBeHidden();
+  await expect(page.locator('#legend li')).toHaveCount(4);
+  await expect(page.locator('#legend li .name').nth(3)).toHaveText('<i>Pedro</i>');
+
   await page.locator('#toggle').click();
   await expect(page.locator('#toggle')).toHaveText(/Reanudar|Resume/);
 });

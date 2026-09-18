@@ -182,3 +182,8 @@ a.btn-go { display: block; }
 #intro-fill { height: 100%; width: 0%; background: var(--ink); transition: width .3s ease-out; }
 .intro-hint { text-align: left; margin-top: 14px; }
 .intro-controls { margin-top: 14px; }
+
+/* Someone joined after the introductions. */
+.add { margin-top: 18px; text-align: center; }
+.add-form { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.add-form .hint-small { margin: 0; text-align: left; }

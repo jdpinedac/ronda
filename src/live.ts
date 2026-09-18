@@ -25,6 +25,11 @@ setText('diagnostics-title', t('technicalDetails'));
 setText('intro-label', t('introLabel'));
 setText('intro-hint', t('introHint'));
 setText('intro-skip', t('introSkip'));
+setText('add-person', t('addPerson'));
+setText('add-go', t('addPersonGo'));
+setText('add-hint', t('addPersonHint'));
+setText('recover', t('recoverAnalysis'));
+($('add-name') as HTMLInputElement | null)?.setAttribute('placeholder', t('addPersonName'));
 const footer = document.getElementById('footer');
 if (footer) mountPrefs(footer, locale);
 
@@ -38,6 +43,12 @@ const countInput = $('count') as HTMLInputElement | null;
 const introPanel = $('intro');
 const introNext = $('intro-next') as HTMLButtonElement | null;
 const introSkip = $('intro-skip') as HTMLButtonElement | null;
+const addWrap = $('add-wrap');
+const addForm = $('add-form');
+const addName = $('add-name') as HTMLInputElement | null;
+const stallWrap = $('stall-wrap');
+/** Audio arriving this long without analysis is a stall worth telling the user about. */
+const STALL_MS = 30_000;
 
 /**
  * The head count is the one input Ronda insists on. Without it the speaker
@@ -103,7 +114,11 @@ function releaseScreen() {
 
 // Wake locks are dropped when a tab is hidden and must be re-taken on return.
 document.addEventListener('visibilitychange', () => {
-  if (running && document.visibilityState === 'visible') void holdScreenAwake();
+  session?.note('capture', `page ${document.visibilityState}`);
+  if (running && document.visibilityState === 'visible') {
+    void holdScreenAwake();
+    void capture?.resume();
+  }
 });
 
 setText('toggle', t('listen'));
@@ -165,7 +180,9 @@ function render(state: LiveState) {
   setText('center-time', formatTime(state.spokenMs));
   setText('center-elapsed', `${formatTime(state.elapsedMs)} ${t('listen') === 'Listen' ? 'at the table' : 'en la mesa'}`);
 
-  const typed = typedNames();
+  // Names as the session knows them, which includes anyone who joined; the
+  // typed field only, before a session exists.
+  const typed = sessionNames.length > 0 ? sessionNames : typedNames();
   legend.innerHTML = '';
   state.speakers.forEach((sp) => {
     const name = typed[sp.id] ?? `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${sp.id + 1}`;
@@ -173,7 +190,8 @@ function render(state: LiveState) {
       PALETTE[sp.id % PALETTE.length]!, name, formatTime(sp.totalMs), `${Math.round(sp.share * 100)}%`));
   });
 
-  const introducing = state.phase === 'introductions';
+  const introducing = state.phase === 'introductions' || state.introducing !== null;
+  const midConversation = state.phase === 'conversation' && state.introducing !== null;
   if (introPanel) introPanel.hidden = !introducing;
   if (introducing) {
     // Whose turn, how much of their voice has arrived, and whether it is enough.
@@ -182,10 +200,16 @@ function render(state: LiveState) {
     const fill = $('intro-fill');
     if (fill) fill.style.width = `${Math.min(100, Math.round((100 * collected) / TARGET_INTRODUCTION_MS))}%`;
     if (introNext) {
-      introNext.disabled = !running || collected < MIN_INTRODUCTION_MS;
-      introNext.textContent = introIndex >= sessionNames.length - 1 ? t('introStart') : t('introNext');
+      introNext.disabled = !running || (!midConversation && collected < MIN_INTRODUCTION_MS);
+      introNext.textContent = midConversation ? t('introDone') : introIndex >= sessionNames.length - 1 ? t('introStart') : t('introNext');
     }
+    if (introSkip) introSkip.hidden = midConversation;
   }
+  // Someone can join once the conversation is being attributed to profiles.
+  if (addWrap) addWrap.hidden = !(state.phase === 'conversation' && state.countHint.source === 'calibration' && state.introducing === null);
+  // Audio keeps arriving but nothing gets analysed: say so, and offer a nudge.
+  const stalled = running && state.elapsedMs - state.coveredToMs > STALL_MS;
+  if (stallWrap) stallWrap.hidden = !stalled;
 
   const active = state.speakers.find((s) => s.active);
   const badge = $('badge');
@@ -202,7 +226,10 @@ function render(state: LiveState) {
 
   const warn = $('warning');
   if (warn) {
-    if (state.samples > 0 && state.reliability !== 'good') {
+    if (stalled) {
+      warn.textContent = t('stalled');
+      warn.hidden = false;
+    } else if (state.samples > 0 && state.reliability !== 'good') {
       warn.textContent = state.reliability === 'insufficient' ? t('insufficient') : t('lowConfidence');
       warn.hidden = false;
     } else if (state.samples > 0 && !state.clear) {
@@ -226,6 +253,8 @@ function render(state: LiveState) {
       <dt>listening for</dt><dd>${(state.elapsedMs / 1000).toFixed(0)} s</dd>
       <dt>speaker count from</dt><dd>${state.countHint.source}</dd>
       <dt>introductions, per person</dt><dd>${state.profilesMs.length ? state.profilesMs.map((ms) => `${(ms / 1000).toFixed(1)} s`).join(', ') : 'none'}</dd>
+      <dt>audio waiting</dt><dd>${(state.bufferedMs / 1000).toFixed(1)} s</dd>
+      <dt>log</dt><dd>${['error', 'skipped', 'dropped', 'recovered', 'capture', 'far-run'].map((k) => `${k} ${state.log.filter((e) => e.kind === k).length}`).join(' · ')}</dd>
       <dt>reliability</dt><dd>${state.reliability}</dd>
     </dl>`;
     diagWrap.hidden = false;
@@ -290,6 +319,7 @@ async function start() {
     if (introductions) { introIndex = 0; session.introduce(0); }
   }
   capture.onAudio((samples) => session?.push(samples));
+  capture.onEvent((detail) => session?.note('capture', detail));
   lastCaptureSettings = capture.settings();
 
   running = true;
@@ -354,6 +384,9 @@ function reset() {
   sessionNames = [];
   introIndex = 0;
   if (introPanel) introPanel.hidden = true;
+  if (addWrap) addWrap.hidden = true;
+  if (addForm) addForm.hidden = true;
+  if (stallWrap) stallWrap.hidden = true;
   const segments = $('segments');
   const legend = $('legend');
   if (segments) segments.innerHTML = '';
@@ -392,7 +425,14 @@ function exportDiagnostics() {
 
 /** The next person's turn, or — after the last — the conversation itself. */
 function nextIntroduction() {
-  if (!session || session.state().phase !== 'introductions') return;
+  if (!session) return;
+  if (session.state().phase === 'conversation') {
+    // Someone who joined has finished introducing themselves.
+    session.endIntroduction();
+    render(session.state());
+    return;
+  }
+  if (session.state().phase !== 'introductions') return;
   if (introIndex >= sessionNames.length - 1) {
     session.startConversation();
     setText('hint', session.state().countHint.source === 'calibration' ? t('introDoneHint') : t('introSkippedHint'));
@@ -413,8 +453,25 @@ function skipIntroductions() {
   render(session.state());
 }
 
+/** Someone joined after the introductions: a profile of their own, filled while they speak. */
+function addPerson() {
+  if (!session || !addName) return;
+  const name = addName.value.trim();
+  const index = session.addPerson(name);
+  sessionNames[index] = name || `${t('listen') === 'Listen' ? 'Speaker' : 'Hablante'} ${index + 1}`;
+  addName.value = '';
+  if (addForm) addForm.hidden = true;
+  introIndex = index;
+  session.introduce(index);
+  render(session.state());
+}
+
 toggle?.addEventListener('click', () => { void (running ? stop() : start()); });
 introNext?.addEventListener('click', nextIntroduction);
 introSkip?.addEventListener('click', skipIntroductions);
+$('add-person')?.addEventListener('click', () => { if (addForm) { addForm.hidden = !addForm.hidden; if (!addForm.hidden) addName?.focus(); } });
+$('add-go')?.addEventListener('click', addPerson);
+addName?.addEventListener('keydown', (e) => { if (e.key === 'Enter') addPerson(); });
+$('recover')?.addEventListener('click', () => { session?.recover(); void capture?.resume(); if (session) render(session.state()); });
 resetButton?.addEventListener('click', reset);
 exportButton?.addEventListener('click', exportDiagnostics);

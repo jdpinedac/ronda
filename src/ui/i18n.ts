@@ -127,6 +127,19 @@ const STRINGS = {
     es: 'Sin presentación, los nombres son etiquetas de grupo y pueden cambiar de manos mientras Ronda reagrupa.',
     en: 'Without introductions, names are group labels and can change hands while Ronda re-groups.',
   },
+  introDone: { es: 'Listo, ya se presentó', en: 'Done, they have introduced themselves' },
+  addPerson: { es: 'Se sumó alguien', en: 'Someone joined' },
+  addPersonName: { es: 'Nombre (opcional)', en: 'Name (optional)' },
+  addPersonGo: { es: 'Agregar y que se presente', en: 'Add, and let them introduce themselves' },
+  addPersonHint: {
+    es: 'Quien llega después de la presentación no tiene perfil y su voz se le suma a quien más se le parezca. Agrégalo y que hable solo unos diez segundos.',
+    en: 'Someone who arrives after the introductions has no profile, and their voice goes to whoever they sound most like. Add them and have them speak alone for about ten seconds.',
+  },
+  stalled: {
+    es: 'Hace más de 30 segundos que llega audio y no se analiza. Pulsa Reanudar; si vuelve a pasar, exporta el diagnóstico al terminar.',
+    en: 'Audio has been arriving for over 30 seconds without being analysed. Press Resume; if it happens again, export the diagnostics when you finish.',
+  },
+  recoverAnalysis: { es: 'Reanudar análisis', en: 'Resume analysis' },
   countFromNamesHint: {
     es: 'Según los nombres. Cambiálo si alguien se va a quedar callado o si hay más gente de la que nombraste.',
     en: 'From the names. Change it if someone will stay silent or there are more people than you named.',

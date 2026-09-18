@@ -147,8 +147,12 @@ stored embeddings in seconds. Fetch the recordings with `spike/08-fetch-ami.py` 
   happening but cannot say who else joined in.
 - The introductions fix the names, not the shares. Overlapping and uncertain speech,
   a tenth to a sixth of a real meeting, still belongs to nobody, and the share error of
-  the long meetings stands. Someone who joins after the round has no profile: their
-  speech goes to whoever they sound most like.
+  the long meetings stands.
+- Someone who joins after the round has no profile until you press *Someone joined*
+  and they introduce themselves; until then their speech goes to whoever they sound
+  most like. Ronda does not add people on its own: measured on the annotated meetings,
+  noticing a new voice automatically works in 0–3 cases of 4, minutes late, with 1–8
+  false alarms an hour ([ADR 0012](docs/adr/0012-someone-joins-and-the-session-keeps-a-log.md)).
 - It measures speaking time. It does not measure who contributed, who was listening,
   or who was right.
 

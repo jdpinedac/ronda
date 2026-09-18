@@ -59,7 +59,8 @@ describe('noticing a voice that never introduced itself', () => {
       const people = [...new Set(d.truthLabels.filter(known))];
       const out = [`\n=== ${d.name}`];
       for (const learn of ['all', 'near'] as const) for (const rule of RULES) {
-        let detected = 0, latency: number[] = [], falseTriggers = 0, hours = 0;
+        let detected = 0, falseTriggers = 0, hours = 0;
+        const latency: number[] = [];
         for (const hidden of people) {
           const enrolled = new Set<number>();
           const profiles = people.filter((p) => p !== hidden).map((p) => { const pr = createProfile(); let got = 0; for (let i = 0; i < V.length; i++) { if (d.truthLabels[i] !== p) continue; addToProfile(pr, V[i]!, w[i]!); enrolled.add(i); got += w[i]!; if (got >= 10_000) break; } return pr; });
