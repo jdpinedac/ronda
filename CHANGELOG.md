@@ -4,6 +4,40 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [0.1.0-rc.10] — 2026-09-18
+
+Tenth candidate. Someone can join late, and a session that goes wrong says so.
+
+### Added
+- *Someone joined* on the live page, once the conversation is being counted
+  against profiles: adds a row (name optional) and has the newcomer introduce
+  themselves for ten seconds like everyone else. Before, a late arrival was
+  credited to whoever they sounded most like.
+- The session keeps a log — windows analysed, errors, audio dropped,
+  recoveries, what the browser did to the capture, introductions, people
+  added — exported with the diagnostics and summarised by the field report.
+- *Resume analysis* appears when audio has been arriving for 30 seconds
+  without being analysed; it drops a stuck inference, keeps the last window
+  of audio and carries on, and nudges a suspended audio context. Coming back
+  to the page does the nudge as well.
+- `bench/newcomer.report.ts` measures whether a voice that never introduced
+  itself can be noticed automatically. It cannot, reliably: 0–3 of 4 hidden
+  voices on the annotated meetings, minutes late, with 1–8 false suggestions
+  an hour. Runs of far samples are logged instead of asked about
+  ([ADR 0012](docs/adr/0012-someone-joins-and-the-session-keeps-a-log.md)).
+
+### Changed
+- A profile learns only from voice samples clearly its own (within 0.75), so
+  a voice nobody introduced cannot pull a profile towards itself. Measured to
+  cost nothing in attribution accuracy.
+- A window that keeps failing is skipped after three tries instead of retried
+  for ever, and audio waiting for analysis is capped at two minutes.
+- Technical details show audio waiting and log counts.
+
+### Fixed
+- The field report no longer replays sessions with introductions, where
+  identities cannot change hands; it said they had.
+
 ## [0.1.0-rc.9] — 2026-09-17
 
 Ninth candidate. The table introduces itself, and names mean something.
@@ -190,6 +224,7 @@ First version published for people to try. Not a production release.
   under-credited.
 - Not yet tried on a phone at a real table by anyone other than the authors.
 
+[0.1.0-rc.10]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.10
 [0.1.0-rc.9]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.9
 [0.1.0-rc.8]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.8
 [0.1.0-rc.7]: https://github.com/jdpinedac/ronda/releases/tag/v0.1.0-rc.7
