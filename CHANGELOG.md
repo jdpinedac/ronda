@@ -4,6 +4,22 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [0.1.0-rc.12] — 2026-09-20
+
+Twelfth candidate. A large table is told what skipping the introductions costs,
+and the log says what became of the screen lock.
+
+### Changed
+- From four people up, starting without introductions — or skipping them —
+  shows a hint that some name will probably end up on the wrong person, that
+  the shares are counted all the same, and what to do if the names matter. A
+  36-minute table of six had six identities minted by 37 seconds, for three
+  voices heard.
+- The session log records whether the screen wake lock was granted, denied
+  (with the error name), unsupported, or released by the system. A 79-minute
+  session saw the page hidden six times and the microphone track end once
+  despite the lock; the next diagnostics file will say why.
+
 ## [0.1.0-rc.11] — 2026-09-20
 
 Eleventh candidate. Two long sessions survived; the page now says when talk-over
