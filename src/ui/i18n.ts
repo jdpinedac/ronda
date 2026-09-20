@@ -30,6 +30,10 @@ const STRINGS = {
     es: 'Las voces llegan poco nítidas. El reparto se calcula igual, pero quién habla en cada momento será menos fiable. Acerca el teléfono a las personas, o aléjalo del ruido y de las ventanas.',
     en: 'The voices are arriving muddled. The shares still add up, but who is speaking at each moment will be less reliable. Move the phone closer to the people, or away from noise and windows.',
   },
+  heavyOverlap: {
+    es: 'Buena parte del tiempo contado fue gente hablando a la vez, o ruido junto a una voz, y se lo lleva quien tenía la palabra. Los porcentajes de quienes hablaron poco son aproximados.',
+    en: 'Much of the time counted was people talking at once, or noise alongside a voice, and it goes to whoever had the floor. The shares of those who spoke least are approximate.',
+  },
   exportHint: {
     es: 'Descarga un archivo con la huella de timbre de cada fragmento de voz, sus tiempos y a quién se asignó. No contiene audio ni nombres, y sirve para reproducir esta sesión y corregir errores.',
     en: 'Downloads a file with the timbre fingerprint of each stretch of speech, its timing and who it was assigned to. It holds no audio and no names, and lets this session be reproduced to fix mistakes.',

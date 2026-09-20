@@ -142,7 +142,10 @@ stored embeddings in seconds. Fetch the recordings with `spike/08-fetch-ami.py` 
   speech is misattributed or missed; over a whole meeting it is a quarter or more. Trust
   short sessions more than long ones.
 - When people talk over each other, the time goes to whoever already had the floor.
-  Someone who mostly speaks over others is under-credited.
+  Someone who mostly speaks over others is under-credited. Where that credit is more
+  than three tenths of the time shown — a shop with music behind the voices read 42 %,
+  real meetings read 2–13 % — the page says so, and the shares of the people who spoke
+  least should be read as approximate ([ADR 0013](docs/adr/0013-say-when-overlap-credit-dominates.md)).
 - When several people talk over each other for a long stretch, Ronda knows it is
   happening but cannot say who else joined in.
 - The introductions fix the names, not the shares. Overlapping and uncertain speech,
@@ -166,6 +169,14 @@ audio processing all raise it. Moving the phone closer to the people, and away f
 noise and glass, is the one lever that reliably lowers it. The "who is speaking" badge
 is labelled *a moment ago* because that is what it is: a verdict about audio a few
 seconds old (ADR 0008).
+
+Ronda also measures how much of the tally is overlap credited to whoever held the floor.
+On the annotated meetings that is 2–13 % of the time shown; a table of six in a shop
+with music read 42 %, and there the four smallest shares moved by five points from one
+minute to the next. Above 30 % both pages warn that the shares of those who spoke least
+are approximate. Music or a nearby table behind the voices is the usual cause; the
+lever is again the phone's position, and a round of introductions so at least the names
+are right ([ADR 0013](docs/adr/0013-say-when-overlap-credit-dominates.md)).
 
 ## Language and theme
 

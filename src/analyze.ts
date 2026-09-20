@@ -214,7 +214,7 @@ function renderDiagnostics(result: DiarizationResult) {
     ['at the table', String(d.spansInForeground)],
     ['too far away, dropped', `${(d.backgroundMs / 1000).toFixed(1)} s`],
     ['not a participant', `${(d.otherVoicesMs / 1000).toFixed(1)} s`],
-    ['talking at once, credited to the floor holder', `${(d.overlapCreditedMs / 1000).toFixed(1)} s`],
+    ['talking at once, credited to the floor holder', `${(d.overlapCreditedMs / 1000).toFixed(1)} s (${Math.round(result.overlapShare * 100)}% of the time shown)`],
     ['voice prints taken', String(d.embeddings)],
     ['speech detected', `${(d.speechMs / 1000).toFixed(1)} s`],
     ['longest single stretch', `${(d.longestSpanMs / 1000).toFixed(1)} s`],
@@ -265,6 +265,8 @@ goButton?.addEventListener('click', async () => {
     } else {
       if (result.reliability === 'low') {
         renderWarning(t('lowConfidence'));
+      } else if (result.overlapHeavy) {
+        renderWarning(t('heavyOverlap'));
       }
       render(result);
     }

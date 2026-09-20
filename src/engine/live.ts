@@ -25,7 +25,7 @@ import { rms, selectForeground } from './levels.js';
 import { createProfile, addToProfile, nearestProfile, profileMs, type SpeakerProfile } from './profiles.js';
 import { NewVoiceWatch } from './newcomer.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
-import { decodeSegmentation, speechSpans, creditOverlap, type Span } from './segmentation.js';
+import { decodeSegmentation, speechSpans, creditOverlap, assessOverlap, type Span } from './segmentation.js';
 import { assessReliability, type Reliability } from './diarize.js';
 
 /**
@@ -119,6 +119,9 @@ export interface LiveState {
   /** How muddled the voices arrive; see assessClarity. */
   spread: number;
   clear: boolean;
+  /** Share of the time shown that is overlap credited to the floor holder; see assessOverlap. */
+  overlapShare: number;
+  overlapHeavy: boolean;
 }
 
 /**
@@ -481,6 +484,7 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
     if (profileMode) profiles.forEach((_, id) => { if (!byId.has(id)) byId.set(id, { totalMs: 0, segments: 0 }); });
     const spokenMs = [...byId.values()].reduce((s, v) => s + v.totalMs, 0);
     const clarity = vectors.length > 0 ? assessClarity(centreEmbeddings(vectors), identities, durations) : { spread: 0, clear: true };
+    const overlap = assessOverlap(durations, credited, identities);
     const current = periods[periods.length - 1];
     const introducing = current && current.toMs === Infinity
       ? { index: current.index, collectedMs: profileMs(profiles[current.index]!) }
@@ -512,6 +516,8 @@ export async function startLiveSession(opts: LiveOptions = {}): Promise<LiveSess
       otherVoicesMs,
       spread: clarity.spread,
       clear: clarity.clear,
+      overlapShare: overlap.share,
+      overlapHeavy: overlap.heavy,
     };
   }
 

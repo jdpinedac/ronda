@@ -15,8 +15,9 @@ import { readFileSync } from 'node:fs';
 import type { DiagnosticsBundle } from '../src/engine/live.js';
 import {
   agglomerative, centreEmbeddings, keepBusiest, placeSplinters, splinterHeadroom, carryIdentities,
-  cosineDistance, normalise, OTHER_VOICE,
+  cosineDistance, normalise, OTHER_VOICE, CLUSTER_HEADROOM,
 } from '../src/engine/clustering.js';
+import { assessOverlap } from '../src/engine/segmentation.js';
 import { replayLive } from './replay.js';
 
 const file = process.env.FILE;
@@ -41,6 +42,8 @@ describe('field diagnostics', () => {
     }
 
     // As shown on screen.
+    const overlap = assessOverlap(b.durationsMs, b.creditedMs, b.identities);
+    out.push(`  overlap credited to the floor holder: ${Math.round(100 * overlap.share)}% of the time shown${overlap.heavy ? ' — heavy, the page warned' : ''}`);
     const tot = new Map<number, number>();
     b.identities.forEach((id, i) => { if (id !== OTHER_VOICE) tot.set(id, (tot.get(id) ?? 0) + b.durationsMs[i]! + b.creditedMs[i]!); });
     const sum = [...tot.values()].reduce((a, c) => a + c, 0);
@@ -64,10 +67,15 @@ describe('field diagnostics', () => {
       out.push(`  #${id + 1}: ${mine.length} samples, ${short} under 1.5 s; spread p50=${f2(own[Math.floor(own.length / 2)] ?? 0)} p90=${f2(own[Math.floor(own.length * 0.9)] ?? 0)}; ${closer} closer to someone else`);
     }
 
-    // Does the shipped clustering reproduce the screen?
+    // Does the shipped clustering reproduce the screen? Same policy as
+    // clusterKnownCount in live.ts: with the television switch on, the extra
+    // clusters are headroom for intruders and are discarded, not placed back.
     const w = b.durationsMs;
     const k = b.speakerCount ?? ids.length;
-    const labels = placeSplinters(C, keepBusiest(agglomerative(C, { k: k + splinterHeadroom(n) }), w, k), w);
+    const shipped = (kk: number) => (b.backgroundVoices
+      ? keepBusiest(agglomerative(C, { k: kk + CLUSTER_HEADROOM }), w, kk)
+      : placeSplinters(C, keepBusiest(agglomerative(C, { k: kk + splinterHeadroom(n) }), w, kk), w));
+    const labels = shipped(k);
     const { identities } = carryIdentities(labels, b.identities, w, ids.length);
     const agree = identities.filter((x, i) => x === b.identities[i]).length;
     out.push(`  re-clustering the same samples: ${agree}/${n} samples land in the same group as on screen`);
@@ -75,7 +83,7 @@ describe('field diagnostics', () => {
     // Would one more or one fewer person have told a different story?
     for (const kk of [k - 1, k + 1]) {
       if (kk < 2) continue;
-      const alt = placeSplinters(C, keepBusiest(agglomerative(C, { k: kk + splinterHeadroom(n) }), w, kk), w);
+      const alt = shipped(kk);
       // Composition of each alternative group by the on-screen identity.
       const groups = new Map<number, Map<number, number>>();
       alt.forEach((g, i) => { const m = groups.get(g) ?? new Map<number, number>(); m.set(b.identities[i]!, (m.get(b.identities[i]!) ?? 0) + w[i]!); groups.set(g, m); });

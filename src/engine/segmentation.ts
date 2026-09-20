@@ -124,3 +124,37 @@ export function creditOverlap(attributed: readonly Span[], overlaps: readonly Sp
   }
   return { creditedMs, unattributedMs, ownerOf };
 }
+
+/**
+ * Above this share of the time shown, crediting overlap stops being a rounding
+ * error and becomes the result. The annotated meetings contain 0–20 % true
+ * overlap and the model hears 2–13 % on them; clean field sessions read 3–8 %,
+ * a 79-minute table of three read 18 %, and a 36-minute table of six in a shop
+ * with music read 42 %, where the four smaller shares moved by five points
+ * from one minute to the next. See ADR 0013.
+ */
+export const OVERLAP_LIMIT = 0.3;
+
+/**
+ * How much of the time on screen is overlap credited to whoever held the floor,
+ * as a fraction, leaving out samples that belong to no participant. Credit is
+ * right on average (ADR 0006) and wrong in detail: a second voice the model
+ * hears can be music or the next table, and every second of it goes to the
+ * last person heard alone. When that is most of the tally, the shares of the
+ * people who spoke least are the least trustworthy.
+ */
+export function assessOverlap(
+  durationsMs: readonly number[],
+  creditedMs: readonly number[],
+  identities: readonly number[],
+): { share: number; heavy: boolean } {
+  let own = 0;
+  let credited = 0;
+  for (let i = 0; i < durationsMs.length; i++) {
+    if ((identities[i] ?? -1) < 0) continue;
+    own += durationsMs[i] ?? 0;
+    credited += creditedMs[i] ?? 0;
+  }
+  const share = own + credited > 0 ? credited / (own + credited) : 0;
+  return { share, heavy: share > OVERLAP_LIMIT };
+}

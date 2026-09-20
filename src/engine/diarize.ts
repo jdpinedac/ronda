@@ -12,7 +12,7 @@ import {
   CLUSTER_HEADROOM, OTHER_VOICE, DEFAULT_THRESHOLD, type SpeakerCountHint,
 } from './clustering.js';
 import { loadModels, runSegmentation, runEmbedding, SEGMENTATION_CLASSES, SAMPLE_RATE } from './models.js';
-import { decodeSegmentation, speechSpans, creditOverlap, type Span } from './segmentation.js';
+import { decodeSegmentation, speechSpans, creditOverlap, assessOverlap, type Span } from './segmentation.js';
 import { rms, selectForeground } from './levels.js';
 import { windowPlan } from './windows.js';
 
@@ -81,6 +81,9 @@ export interface DiarizationResult {
   spans: { startMs: number; endMs: number; speaker: number }[];
   /** Spans where the model heard more than one voice at once, credited or not. */
   overlapMs: number;
+  /** Share of the time shown that is overlap credited to the floor holder; see assessOverlap. */
+  overlapShare: number;
+  overlapHeavy: boolean;
   silenceMs: number;
   totalMs: number;
   countHint: SpeakerCountHint;
@@ -249,6 +252,7 @@ export async function diarize(
     .sort((a, b) => b.totalMs - a.totalMs);
 
   const reliability = assessReliability(vectors.length, speakers.length);
+  const overlap = assessOverlap(durations, credit.creditedMs, labels);
 
   opts.onProgress?.(1, 'done');
   return {
@@ -258,6 +262,8 @@ export async function diarize(
       ...overlaps.map((s, i) => ({ startMs: s.startMs, endMs: s.endMs, speaker: credit.ownerOf[i]! < 0 ? OTHER_VOICE : (labels[credit.ownerOf[i]!] ?? OTHER_VOICE) })),
     ].filter((s) => s.speaker !== OTHER_VOICE).sort((a, b) => a.startMs - b.startMs),
     overlapMs,
+    overlapShare: overlap.share,
+    overlapHeavy: overlap.heavy,
     silenceMs,
     totalMs,
     countHint,

@@ -232,8 +232,10 @@ function render(state: LiveState) {
     } else if (state.samples > 0 && state.reliability !== 'good') {
       warn.textContent = state.reliability === 'insufficient' ? t('insufficient') : t('lowConfidence');
       warn.hidden = false;
-    } else if (state.samples > 0 && !state.clear) {
-      warn.textContent = t('unclearVoices');
+    } else if (state.samples > 0 && (!state.clear || state.overlapHeavy)) {
+      // Both can be true at once, and they say different things: one about
+      // who is speaking now, the other about the shares.
+      warn.textContent = [state.clear ? null : t('unclearVoices'), state.overlapHeavy ? t('heavyOverlap') : null].filter(Boolean).join(' ');
       warn.hidden = false;
     } else {
       warn.hidden = true;
@@ -250,6 +252,7 @@ function render(state: LiveState) {
       <dt>too far away, dropped</dt><dd>${(state.backgroundMs / 1000).toFixed(1)} s</dd>
       <dt>not a participant</dt><dd>${(state.otherVoicesMs / 1000).toFixed(1)} s</dd>
       <dt>voice clarity (spread, lower is clearer)</dt><dd>${state.spread.toFixed(2)}</dd>
+      <dt>talk-over credited to the floor holder</dt><dd>${Math.round(state.overlapShare * 100)}% of the time shown</dd>
       <dt>listening for</dt><dd>${(state.elapsedMs / 1000).toFixed(0)} s</dd>
       <dt>speaker count from</dt><dd>${state.countHint.source}</dd>
       <dt>introductions, per person</dt><dd>${state.profilesMs.length ? state.profilesMs.map((ms) => `${(ms / 1000).toFixed(1)} s`).join(', ') : 'none'}</dd>

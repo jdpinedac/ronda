@@ -124,7 +124,7 @@ describe('accuracy', () => {
         const r = await diarize(audio, { speakerCount: rec.people, backgroundVoices: bg });
         const d = diarizationErrorRate(truth?.turns ?? [], r.spans, totalMs);
         const se = truth ? shareError(truth, r.speakers, d.mapping) : null;
-        out.push(`[file, count=${rec.people}${bg ? ', tv on' : ''}]  speakers=${r.speakers.length}  shares=${pct(r.speakers.map((s) => s.share))}${se ? ` (true ${se.truthShares}) share-error=${(100 * se.error).toFixed(1)}%` : ''}  DER=${d.der.toFixed(3)} miss=${sec(d.missedMs)} fa=${sec(d.falseAlarmMs)} conf=${sec(d.confusionMs)}  overlap heard=${sec(r.overlapMs)}s  dropped-as-distant=${sec(r.diagnostics.backgroundMs)}s`);
+        out.push(`[file, count=${rec.people}${bg ? ', tv on' : ''}]  speakers=${r.speakers.length}  shares=${pct(r.speakers.map((s) => s.share))}${se ? ` (true ${se.truthShares}) share-error=${(100 * se.error).toFixed(1)}%` : ''}  DER=${d.der.toFixed(3)} miss=${sec(d.missedMs)} fa=${sec(d.falseAlarmMs)} conf=${sec(d.confusionMs)}  overlap heard=${sec(r.overlapMs)}s credited=${Math.round(100 * r.overlapShare)}%${r.overlapHeavy ? ' HEAVY' : ''}  dropped-as-distant=${sec(r.diagnostics.backgroundMs)}s`);
         console.log(out.join('\n'));
         return;
       }
@@ -144,12 +144,12 @@ describe('accuracy', () => {
 
       const counted = await diarize(audio, { speakerCount: rec.people });
       const seCounted = truth ? shareError(truth, counted.speakers, diarizationErrorRate(truth.turns, counted.spans, totalMs).mapping) : null;
-      out.push(`[file, count=${rec.people}]    speakers=${String(counted.speakers.length).padStart(2)}  shares=${pct(counted.speakers.map((s) => s.share))}${seCounted ? ` (true ${seCounted.truthShares}) share-error=${(100 * seCounted.error).toFixed(1)}%` : ''}${der(counted.spans)}  reliability=${counted.reliability}  dropped-as-distant=${sec(counted.diagnostics.backgroundMs)}s`);
+      out.push(`[file, count=${rec.people}]    speakers=${String(counted.speakers.length).padStart(2)}  shares=${pct(counted.speakers.map((s) => s.share))}${seCounted ? ` (true ${seCounted.truthShares}) share-error=${(100 * seCounted.error).toFixed(1)}%` : ''}${der(counted.spans)}  reliability=${counted.reliability}  overlap credited=${Math.round(100 * counted.overlapShare)}%${counted.overlapHeavy ? ' HEAVY' : ''}  dropped-as-distant=${sec(counted.diagnostics.backgroundMs)}s`);
 
       const l0 = await live(audio, {});
       out.push(`[live, no count]   speakers=${String(l0.state.speakers.length).padStart(2)}  shares=${pct(l0.state.speakers.map((s) => s.share))}  over time: ${l0.history.join(',')}`);
       const l1 = await live(audio, { speakerCount: rec.people });
-      out.push(`[live, count=${rec.people}]    speakers=${String(l1.state.speakers.length).padStart(2)}  shares=${pct(l1.state.speakers.map((s) => s.share))}`);
+      out.push(`[live, count=${rec.people}]    speakers=${String(l1.state.speakers.length).padStart(2)}  shares=${pct(l1.state.speakers.map((s) => s.share))}  overlap credited=${Math.round(100 * l1.state.overlapShare)}%${l1.state.overlapHeavy ? ' HEAVY' : ''}`);
       console.log(out.join('\n'));
     });
   }
