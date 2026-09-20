@@ -4,6 +4,34 @@ All notable changes to Ronda. The format follows [Keep a Changelog](https://keep
 versions follow [Semantic Versioning](https://semver.org/). Until a release candidate
 has survived real tables, versions carry an `-rc.N` suffix.
 
+## [0.1.0-rc.11] — 2026-09-20
+
+Eleventh candidate. Two long sessions survived; the page now says when talk-over
+or noise is carrying the tally.
+
+### Added
+- Both pages warn when more than three tenths of the time shown is overlap
+  credited to whoever held the floor. Real meetings read 2–13 %; a table of six
+  in a shop with music read 42 %, and there the four smallest shares moved by
+  five points from one minute to the next while the two largest held. The
+  warning says the shares of those who spoke least are approximate. Technical
+  details show the figure on both pages
+  ([ADR 0013](docs/adr/0013-say-when-overlap-credit-dominates.md)).
+- The accuracy bench prints the credited share for every recording.
+
+### Fixed
+- The field report re-clustered exported sessions with the wrong policy when the
+  television switch was on, and reported 356 of 486 samples agreeing where the
+  shipped clustering agrees on all 486. Its "with one more or one fewer person"
+  lines had the same fault.
+
+### Documented
+- [ADR 0003](docs/adr/0003-what-field-testing-changed.md) records what a
+  79-minute table of three with introductions and a 36-minute table of six in a
+  noisy shop taught: introductions hold up over an hour, the shares of a large
+  table are reproducible but the small ones churn, and every field file so far
+  is Android Chrome.
+
 ## [0.1.0-rc.10] — 2026-09-18
 
 Tenth candidate. Someone can join late, and a session that goes wrong says so.
