@@ -131,6 +131,10 @@ const STRINGS = {
     es: 'Sin presentación, los nombres son etiquetas de grupo y pueden cambiar de manos mientras Ronda reagrupa.',
     en: 'Without introductions, names are group labels and can change hands while Ronda re-groups.',
   },
+  largeTableNoIntro: {
+    es: 'Sin presentación y con cuatro personas o más, es probable que algún nombre acabe sobre la persona equivocada. Los porcentajes se calculan igual; si importan los nombres, reinicia, escribe los nombres y haz la presentación.',
+    en: 'Without introductions, at a table of four or more, some name will probably end up on the wrong person. The shares are counted all the same; if the names matter, reset, type the names and do the introductions.',
+  },
   introDone: { es: 'Listo, ya se presentó', en: 'Done, they have introduced themselves' },
   addPerson: { es: 'Se sumó alguien', en: 'Someone joined' },
   addPersonName: { es: 'Nombre (opcional)', en: 'Name (optional)' },

@@ -100,10 +100,16 @@ let wakeLock: WakeLockSentinel | null = null;
  * offers one; where it is missing, listening still works while the screen is on.
  */
 async function holdScreenAwake() {
+  if (!('wakeLock' in navigator)) { session?.note('capture', 'wake lock unsupported'); return; }
   try {
-    if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
-  } catch {
-    // Denied or unsupported; not worth interrupting the user over.
+    wakeLock = await navigator.wakeLock.request('screen');
+    session?.note('capture', 'wake lock granted');
+    // The system drops the lock when the page is hidden or the screen is
+    // turned off; logging it tells a hidden page apart from a blanked screen.
+    wakeLock.addEventListener('release', () => { session?.note('capture', 'wake lock released'); }, { once: true });
+  } catch (err) {
+    // Denied; not worth interrupting the user over, but worth knowing.
+    session?.note('capture', `wake lock denied: ${err instanceof Error ? err.name : String(err)}`);
   }
 }
 
@@ -335,7 +341,8 @@ async function start() {
   toggle?.classList.add('stopping');
   const introducing = session.state().phase === 'introductions';
   setText('badge-text', introducing ? t('introducing') : t('listening'));
-  setText('hint', introducing ? t('introHint') : t('firstResultWait'));
+  const people = session.state().countHint.k;
+  setText('hint', introducing ? t('introHint') : (people ?? 0) >= LARGE_TABLE ? noIntroductionsHint(people) : t('firstResultWait'));
   if (toggle) toggle.disabled = false;
 
   const badge = $('badge');
@@ -438,7 +445,7 @@ function nextIntroduction() {
   if (session.state().phase !== 'introductions') return;
   if (introIndex >= sessionNames.length - 1) {
     session.startConversation();
-    setText('hint', session.state().countHint.source === 'calibration' ? t('introDoneHint') : t('introSkippedHint'));
+    setText('hint', session.state().countHint.source === 'calibration' ? t('introDoneHint') : noIntroductionsHint(session.state().countHint.k));
     setText('badge-text', t('listening'));
   } else {
     introIndex += 1;
@@ -447,11 +454,22 @@ function nextIntroduction() {
   render(session.state());
 }
 
+/**
+ * From four people up, a session without introductions hands names to voice
+ * fragments before everyone has spoken: a 36-minute table of six had six
+ * identities minted by 37 s, for three voices heard (ADR 0003). The shares
+ * survive that; the names do not, and the hint says so where it matters.
+ */
+const LARGE_TABLE = 4;
+function noIntroductionsHint(people: number | null): string {
+  return (people ?? 0) >= LARGE_TABLE ? t('largeTableNoIntro') : t('introSkippedHint');
+}
+
 /** Give up on the introductions: the conversation is grouped as before, names as labels. */
 function skipIntroductions() {
   if (!session || session.state().phase !== 'introductions') return;
   session.startConversation();
-  setText('hint', t('introSkippedHint'));
+  setText('hint', noIntroductionsHint(session.state().countHint.k));
   if (running) setText('badge-text', t('listening'));
   render(session.state());
 }

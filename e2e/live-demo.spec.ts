@@ -21,6 +21,8 @@ test('live rows keep their colour and name while shares move', async ({ page }) 
   await page.locator('#intro-skip').click();
   await expect(page.locator('#intro')).toBeHidden();
   await expect(page.locator('#hint')).toContainText(/Sin presentación|Without introductions/);
+  // Four names: the hint says the names will probably land on the wrong people.
+  await expect(page.locator('#hint')).toContainText(/cuatro personas o más|four or more/);
 
   // Wait for the first update with at least two rows, then sample every few seconds.
   await expect(page.locator('#legend li')).toHaveCount(2, { timeout: 60_000 }).catch(() => undefined);
@@ -81,8 +83,10 @@ test('live rows keep their colour and name while shares move', async ({ page }) 
   await page.locator('#export').click();
   const file = await download;
   expect(file.suggestedFilename()).toMatch(/^ronda-diagnostics-.*\.json$/);
-  const bundle = JSON.parse((await (await file.createReadStream()).toArray()).join('')) as { format: string; vectors: number[][]; identities: number[]; spans: unknown[] };
+  const bundle = JSON.parse((await (await file.createReadStream()).toArray()).join('')) as { format: string; vectors: number[][]; identities: number[]; spans: unknown[]; log: { kind: string; detail?: string }[] };
   expect(bundle.format).toBe('ronda-diagnostics/1');
+  // The session log says what became of the screen wake lock, whatever the browser decided.
+  expect(bundle.log.some((e) => e.kind === 'capture' && /^wake lock (granted|denied|unsupported)/.test(e.detail ?? ''))).toBe(true);
   expect(bundle.vectors.length).toBeGreaterThan(0);
   expect(bundle.vectors.length).toBe(bundle.identities.length);
   expect(JSON.stringify(bundle)).not.toContain('Ana');
