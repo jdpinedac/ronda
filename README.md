@@ -4,7 +4,7 @@
 it each person speaks for. It never transcribes, and the audio never leaves the device.
 
 > **Status: release candidate, not a production release.** Ronda is published at
-> [jdpinedac.github.io/ronda](https://jdpinedac.github.io/ronda/) so people can try it
+> [ronda.juanpineda.co](https://ronda.juanpineda.co/) so people can try it
 > at a real table and tell us what breaks. Both modes work end to end, the measurements
 > below are real, and the numbers on screen should be read with the limitations further
 > down in mind. Versions are tagged `vX.Y.Z-rc.N` until one earns a release; see
