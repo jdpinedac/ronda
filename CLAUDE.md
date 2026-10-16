@@ -7,7 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Speaker diarization that runs entirely in the browser tab: it measures how much of a
 conversation each person speaks for. It never transcribes and never keeps audio. Two ONNX
 models (pyannote segmentation-3.0, WeSpeaker ResNet34 embeddings) run on onnxruntime-web,
-WASM backend, single-threaded on purpose. Published to GitHub Pages at `/ronda/`; versions
+WASM backend, single-threaded on purpose. Published to GitHub Pages as ronda.juanpineda.co (built with `BASE_PATH=/`;
+local dev and preview keep `/ronda/`); versions
 are `vX.Y.Z-rc.N` until one survives real tables. README.md carries the measured numbers
 and the stated limitations; keep them in sync when the pipeline changes.
 
